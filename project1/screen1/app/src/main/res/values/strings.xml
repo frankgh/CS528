@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Screen 1</string>
+    <string name="log_into_my_page">Log into Andres\'s page</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="log_in">Log In</string>
+</resources>

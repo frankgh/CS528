@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Screen 3</string>
+    <string name="website_3">Website 3</string>
+    <string name="website_2">Website 2</string>
+    <string name="website_1">Website 1</string>
+
+    <string name="website_1_url">https://www.google.com</string>
+    <string name="website_1_description">Google\'s search page</string>
+    <string name="website_2_url">https://www.wpi.edu</string>
+    <string name="website_2_description">Worcester Polytechnic Institute</string>
+    <string name="website_3_url">http://www.cnn.com</string>
+    <string name="website_3_description">Cable News Network Homepage</string>
+
+    <string name="good_job">Good job!!</string>
+</resources>
