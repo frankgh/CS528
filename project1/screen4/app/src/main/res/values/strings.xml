@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Address Book</string>
+    <string name="search">Search</string>
+    <string name="clear">Clear</string>
+    <string name="import_contacts">Import Contacts</string>
+    <string name="export_all">Export All</string>
+    <string name="name">Name:</string>
+    <string name="delete">Delete</string>
+    <string name="update">Update</string>
+    <string name="create">Create</string>
+    <string name="phone">Phone:</string>
+    <string name="email">Email:</string>
+    <string name="address_1">Address 1:</string>
+    <string name="address_2">Address 2:</string>
+    <string name="city">City:</string>
+    <string name="state">State:</string>
+    <string name="country">Country:</string>
+    <string name="zip_code">Zip Code:</string>
+</resources>

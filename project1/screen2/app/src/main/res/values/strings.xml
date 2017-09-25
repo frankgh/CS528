@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Screen 2</string>
+    <string name="app_name">YourApplication</string>
+    <string name="empty" />
 </resources>
