@@ -1,4 +1,4 @@
-package com.bignerdranch.android.criminalintent;
+package com.wpics528.android.criminalintent;
 
 import android.content.Intent;
 import android.os.Bundle;

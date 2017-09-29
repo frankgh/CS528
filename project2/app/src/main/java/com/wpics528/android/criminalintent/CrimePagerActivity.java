@@ -1,4 +1,4 @@
-package com.bignerdranch.android.criminalintent;
+package com.wpics528.android.criminalintent;
 
 import android.content.Context;
 import android.content.Intent;
@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class CrimePagerActivity extends AppCompatActivity {
     private static final String EXTRA_CRIME_ID =
-            "com.bignerdranch.android.criminalintent.crime_id";
+            "com.wpics528.android.criminalintent.crime_id";
 
     private ViewPager mViewPager;
     private List<Crime> mCrimes;

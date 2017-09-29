@@ -1,4 +1,4 @@
-package com.bignerdranch.android.criminalintent;
+package com.wpics528.android.criminalintent;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -18,7 +18,7 @@ import java.util.GregorianCalendar;
 public class DatePickerFragment extends DialogFragment {
 
     public static final String EXTRA_DATE =
-            "com.bignerdranch.android.criminalintent.date";
+            "com.wpics528.android.criminalintent.date";
 
     private static final String ARG_DATE = "date";
 

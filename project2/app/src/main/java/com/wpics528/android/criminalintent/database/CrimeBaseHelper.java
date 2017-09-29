@@ -1,10 +1,10 @@
-package com.bignerdranch.android.criminalintent.database;
+package com.wpics528.android.criminalintent.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.bignerdranch.android.criminalintent.database.CrimeDbSchema.CrimeTable;
+import com.wpics528.android.criminalintent.database.CrimeDbSchema.CrimeTable;
 
 public class CrimeBaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "CrimeBaseHelper";
