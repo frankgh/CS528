@@ -1,57 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:orientation="vertical"
-              android:layout_width="match_parent"
-              android:layout_height="wrap_content">
-
-    <include layout="@layout/view_camera_and_title" />
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/crime_details_label"
-        style="?android:listSeparatorTextViewStyle"/>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
     <LinearLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp">
+        android:orientation="vertical">
 
-        <Button
-            android:id="@+id/crime_date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"/>
+        <include layout="@layout/view_camera_and_title" />
 
-        <CheckBox
-            android:id="@+id/crime_solved"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/crime_solved_label"
-            android:layout_weight="1"/>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:orientation="horizontal">
-        <Button
-            android:id="@+id/crime_suspect"
+        <TextView
+            style="?android:listSeparatorTextViewStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/crime_suspect_text"
-            />
-        <Button
-            android:id="@+id/crime_report"
+            android:text="@string/crime_details_label" />
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/crime_report_text"
-            />
-    </LinearLayout>
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:orientation="horizontal">
 
-</LinearLayout>
+            <Button
+                android:id="@+id/crime_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1" />
+
+            <CheckBox
+                android:id="@+id/crime_solved"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/crime_solved_label" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/crime_suspect"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/crime_suspect_text" />
+
+            <Button
+                android:id="@+id/crime_report"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/crime_report_text" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/view_gallery_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/display_gallery" />
+
+            <CheckBox
+                android:id="@+id/enable_face_detection_checkbox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/enable_face_detection" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
