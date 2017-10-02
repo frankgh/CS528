@@ -16,23 +16,25 @@ import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.UUID;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.Unbinder;
 
 public class CrimeFragment extends Fragment {
 
@@ -43,17 +45,46 @@ public class CrimeFragment extends Fragment {
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_CONTACT = 1;
     private static final int REQUEST_PHOTO = 2;
+    @BindView(R.id.crime_title)
+    EditText mTitleField;
+
+    @BindView(R.id.crime_date_button)
+    ImageButton mDateButton;
+    @BindView(R.id.crime_date)
+    TextView mDateEditText;
+
+    @BindView(R.id.crime_solved)
+    ImageButton mSolvedButton;
+    @BindView(R.id.crime_solved_text)
+    TextView mSolvedEditText;
+
+    @BindView(R.id.crime_suspect)
+    ImageButton mSuspectButton;
+    @BindView(R.id.crime_suspect_text)
+    TextView mSuspectEditText;
+
+    @BindView(R.id.crime_report)
+    ImageButton mReportButton;
+
+    @BindView(R.id.view_gallery_button)
+    ImageButton mViewGalleryButton;
+    @BindView(R.id.view_gallery_text)
+    TextView mViewGalleryText;
+
+    @BindView(R.id.enable_face_detection_button)
+    ImageButton mEnableFaceDetectionButton;
+    @BindView(R.id.enable_face_detection_text)
+    TextView mEnableFaceDetectionEditText;
+
+    @BindView(R.id.crime_camera)
+    ImageButton mPhotoButton;
+    @BindView(R.id.crime_photo)
+    ImageView mPhotoView;
 
     private Crime mCrime;
     private File mPhotoFile;
-    private EditText mTitleField;
-    private Button mDateButton;
-    private CheckBox mSolvedCheckbox;
-    private Button mReportButton;
-    private Button mSuspectButton;
-    private ImageButton mPhotoButton;
-    private ImageView mPhotoView;
-    private CheckBox mEnableFaceDetectionCheckbox;
+    private Unbinder unbinder;
+
 
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
@@ -84,8 +115,8 @@ public class CrimeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_crime, container, false);
+        unbinder = ButterKnife.bind(this, v);
 
-        mTitleField = v.findViewById(R.id.crime_title);
         mTitleField.setText(mCrime.getTitle());
         mTitleField.addTextChangedListener(new TextWatcher() {
             @Override
@@ -104,7 +135,6 @@ public class CrimeFragment extends Fragment {
             }
         });
 
-        mDateButton = v.findViewById(R.id.crime_date);
         updateDate();
         mDateButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -117,16 +147,15 @@ public class CrimeFragment extends Fragment {
             }
         });
 
-        mSolvedCheckbox = v.findViewById(R.id.crime_solved);
-        mSolvedCheckbox.setChecked(mCrime.isSolved());
-        mSolvedCheckbox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+        updateSolved();
+        mSolvedButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mCrime.setSolved(isChecked);
+            public void onClick(View view) {
+                mCrime.setSolved(!mCrime.isSolved());
+                updateSolved();
             }
         });
 
-        mReportButton = v.findViewById(R.id.crime_report);
         mReportButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent i = new Intent(Intent.ACTION_SEND);
@@ -142,7 +171,6 @@ public class CrimeFragment extends Fragment {
 
         final Intent pickContact = new Intent(Intent.ACTION_PICK,
                 ContactsContract.Contacts.CONTENT_URI);
-        mSuspectButton = v.findViewById(R.id.crime_suspect);
         mSuspectButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 startActivityForResult(pickContact, REQUEST_CONTACT);
@@ -150,7 +178,7 @@ public class CrimeFragment extends Fragment {
         });
 
         if (mCrime.getSuspect() != null) {
-            mSuspectButton.setText(mCrime.getSuspect());
+            mSuspectEditText.setText(mCrime.getSuspect());
         }
 
         PackageManager packageManager = getActivity().getPackageManager();
@@ -159,7 +187,6 @@ public class CrimeFragment extends Fragment {
             mSuspectButton.setEnabled(false);
         }
 
-        mPhotoButton = v.findViewById(R.id.crime_camera);
         final Intent captureImageCheck = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
         boolean canTakePhoto = captureImageCheck.resolveActivity(packageManager) != null;
@@ -190,16 +217,27 @@ public class CrimeFragment extends Fragment {
                 }
             });
         }
-
-        mPhotoView = v.findViewById(R.id.crime_photo);
         updatePhotoView();
 
-        mEnableFaceDetectionCheckbox = v.findViewById(R.id.enable_face_detection_checkbox);
-        mEnableFaceDetectionCheckbox.setChecked(mCrime.isFaceDetectionEnabled());
-        mEnableFaceDetectionCheckbox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+        updateGallery();
+        mViewGalleryButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                mCrime.setFaceDetectionEnabled(isChecked);
+            public void onClick(View view) {
+                if (mCrime.getPhotoCount() < 16) {
+
+                } else {
+
+                }
+            }
+        });
+
+
+        updateFaceDetection();
+        mEnableFaceDetectionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mCrime.setFaceDetectionEnabled(!mCrime.isFaceDetectionEnabled());
+                updateFaceDetection();
             }
         });
 
@@ -242,7 +280,7 @@ public class CrimeFragment extends Fragment {
 
                 String suspect = c.getString(0);
                 mCrime.setSuspect(suspect);
-                mSuspectButton.setText(suspect);
+                mSuspectEditText.setText(suspect);
             } finally {
                 c.close();
             }
@@ -253,11 +291,49 @@ public class CrimeFragment extends Fragment {
                 mPhotoFile = CrimeLab.get(getActivity()).getPhotoFile(mCrime);
                 updatePhotoView();
             }
+
+            updateGallery();
         }
     }
 
     private void updateDate() {
-        mDateButton.setText(mCrime.getDate().toString());
+        mDateEditText.setText(DateUtils.getRelativeTimeSpanString(
+                mCrime.getDate().getTime(),
+                System.currentTimeMillis(),
+                DateUtils.SECOND_IN_MILLIS));
+    }
+
+    private void updateGallery() {
+        int photoCount = mCrime.getPhotoCount();
+        if (photoCount == 0) {
+            mViewGalleryText.setVisibility(View.GONE);
+        } else if (photoCount == 1) {
+            mViewGalleryText.setVisibility(View.VISIBLE);
+            mViewGalleryText.setText(getString(R.string.gallery_count_one));
+        } else {
+            mViewGalleryText.setVisibility(View.VISIBLE);
+            mViewGalleryText.setText(getString(R.string.gallery_count, photoCount));
+        }
+    }
+
+    private void updateSolved() {
+        if (mCrime.isSolved()) {
+            mSolvedButton.setImageResource(R.drawable.ic_thumb_up);
+            mSolvedEditText.setText(R.string.case_solved);
+        } else {
+            mSolvedButton.setImageResource(R.drawable.ic_thumb_down);
+            mSolvedEditText.setText(R.string.case_unsolved);
+        }
+    }
+
+    private void updateFaceDetection() {
+        if (mCrime.isFaceDetectionEnabled()) {
+            mEnableFaceDetectionButton.setImageResource(R.drawable.ic_tag_faces);
+            mEnableFaceDetectionEditText.setText(R.string.face_detection_enabled);
+        } else {
+            mEnableFaceDetectionButton.setImageResource(R.drawable.ic_tag_faces_off);
+            mEnableFaceDetectionEditText.setText(R.string.face_detection_disabled);
+        }
     }
 
     private String getCrimeReport() {
@@ -288,5 +364,11 @@ public class CrimeFragment extends Fragment {
                     mPhotoFile.getPath(), getActivity());
             mPhotoView.setImageBitmap(bitmap);
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        unbinder.unbind();
     }
 }

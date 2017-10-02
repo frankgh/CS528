@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:layout_editor_absoluteX="0dp"
+    tools:layout_editor_absoluteY="81dp">
+
+    <TextView
+        android:id="@+id/textView"
+        style="?android:listSeparatorTextViewStyle"
+        android:layout_width="368dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/crime_details_label"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/crime_date_button"
+        android:layout_width="117dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#FBC02D"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/crime_solved"
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:srcCompat="@drawable/ic_date" />
+
+    <ImageButton
+        android:id="@+id/crime_report"
+        android:layout_width="117dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#0097A7"
+        android:tint="@color/colorTint"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toLeftOf="@+id/view_gallery_button"
+        app:layout_constraintTop_toBottomOf="@+id/crime_date"
+        app:srcCompat="@drawable/ic_report" />
+
+    <ImageButton
+        android:id="@+id/crime_suspect"
+        android:layout_width="118dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#0288D1"
+        android:tint="@color/colorTint"
+        app:layout_constraintLeft_toRightOf="@+id/crime_solved"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:srcCompat="@drawable/ic_suspect" />
+
+    <ImageButton
+        android:id="@+id/view_gallery_button"
+        android:layout_width="117dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#AFB42B"
+        app:layout_constraintLeft_toRightOf="@+id/crime_report"
+        app:layout_constraintRight_toLeftOf="@+id/enable_face_detection_button"
+        app:layout_constraintTop_toBottomOf="@+id/crime_solved_text"
+        app:srcCompat="@drawable/ic_gallery" />
+
+    <ImageButton
+        android:id="@+id/crime_solved"
+        android:layout_width="117dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#E64A19"
+        android:tint="@color/colorTint"
+        app:layout_constraintLeft_toRightOf="@+id/crime_date_button"
+        app:layout_constraintRight_toLeftOf="@+id/crime_suspect"
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:srcCompat="@drawable/ic_thumb_down" />
+
+    <ImageButton
+        android:id="@+id/enable_face_detection_button"
+        android:layout_width="118dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="#388E3C"
+        app:layout_constraintLeft_toRightOf="@+id/view_gallery_button"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/crime_suspect_text"
+        app:srcCompat="@drawable/ic_tag_faces" />
+
+    <TextView
+        android:id="@+id/crime_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="0dp"
+        android:text="crime_date"
+        app:layout_constraintHorizontal_bias="0.533"
+        app:layout_constraintLeft_toLeftOf="@+id/crime_date_button"
+        app:layout_constraintRight_toRightOf="@+id/crime_date_button"
+        app:layout_constraintTop_toBottomOf="@+id/crime_date_button" />
+
+    <TextView
+        android:id="@+id/crime_suspect_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="0dp"
+        app:layout_constraintLeft_toLeftOf="@+id/crime_suspect"
+        app:layout_constraintRight_toRightOf="@+id/crime_suspect"
+        app:layout_constraintTop_toBottomOf="@+id/crime_suspect" />
+
+    <TextView
+        android:id="@+id/crime_solved_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="0dp"
+        android:text="crime_solved"
+        app:layout_constraintHorizontal_bias="0.529"
+        app:layout_constraintLeft_toLeftOf="@+id/crime_solved"
+        app:layout_constraintRight_toRightOf="@+id/crime_solved"
+        app:layout_constraintTop_toBottomOf="@+id/crime_solved" />
+
+    <TextView
+        android:id="@+id/enable_face_detection_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="0dp"
+        android:gravity="center_horizontal"
+        android:text="face_detection"
+        app:layout_constraintHorizontal_bias="0.571"
+        app:layout_constraintLeft_toLeftOf="@+id/enable_face_detection_button"
+        app:layout_constraintRight_toRightOf="@+id/enable_face_detection_button"
+        app:layout_constraintTop_toBottomOf="@+id/enable_face_detection_button" />
+
+    <TextView
+        android:id="@+id/view_gallery_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="0dp"
+        android:text="--"
+        app:layout_constraintLeft_toLeftOf="@+id/view_gallery_button"
+        app:layout_constraintRight_toRightOf="@+id/view_gallery_button"
+        app:layout_constraintTop_toBottomOf="@+id/view_gallery_button" />
+</android.support.constraint.ConstraintLayout>
