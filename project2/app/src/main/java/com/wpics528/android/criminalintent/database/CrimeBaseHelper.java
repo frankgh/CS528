@@ -9,11 +9,14 @@ import com.wpics528.android.criminalintent.database.CrimeDbSchema.CrimeTable;
 
 public class CrimeBaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "CrimeBaseHelper";
-    private static final int VERSION = 3;
+    private static final int VERSION = 4;
     private static final String DATABASE_NAME = "crimeBase.db";
 
     private static final String DATABASE_ALTER_PHOTO_COUNT_2 = "ALTER TABLE "
             + CrimeTable.NAME + " ADD COLUMN " + CrimeTable.Cols.PHOTO_COUNT + " INTEGER;";
+
+    private static final String DATABASE_ALTER_FACE_DETECTION_3 = "ALTER TABLE "
+            + CrimeTable.NAME + " ADD COLUMN " + CrimeTable.Cols.FACE_DETECTION + " INTEGER;";
 
     public CrimeBaseHelper(Context context) {
         super(context, DATABASE_NAME, null, VERSION);
@@ -29,7 +32,8 @@ public class CrimeBaseHelper extends SQLiteOpenHelper {
                 CrimeTable.Cols.DATE + ", " +
                 CrimeTable.Cols.SUSPECT + ", " +
                 CrimeTable.Cols.SOLVED + ", " +
-                CrimeTable.Cols.PHOTO_COUNT +
+                CrimeTable.Cols.PHOTO_COUNT + "," +
+                CrimeTable.Cols.FACE_DETECTION +
                 ")"
         );
     }
@@ -39,6 +43,11 @@ public class CrimeBaseHelper extends SQLiteOpenHelper {
         if (oldVersion < 3) {
             Log.d(TAG, "Adding Photo Count to database");
             db.execSQL(DATABASE_ALTER_PHOTO_COUNT_2);
+        }
+
+        if (oldVersion < 4) {
+            Log.d(TAG, "Adding Face Detection Enabled to database");
+            db.execSQL(DATABASE_ALTER_FACE_DETECTION_3);
         }
     }
 }

@@ -51,4 +51,12 @@
         android:layout_marginRight="16dp"
         android:text="@string/display_gallery" />
 
+    <CheckBox
+        android:id="@+id/enable_face_detection_checkbox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:text="@string/enable_face_detection" />
+
 </LinearLayout>

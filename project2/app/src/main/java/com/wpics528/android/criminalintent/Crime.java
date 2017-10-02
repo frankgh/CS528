@@ -11,6 +11,7 @@ public class Crime {
     private boolean mSolved;
     private String mSuspect;
     private int mPhotoCount;
+    private boolean mFaceDetectionEnabled;
 
     public Crime() {
         this(UUID.randomUUID());
@@ -63,5 +64,13 @@ public class Crime {
 
     public void setPhotoCount(int photoCount) {
         mPhotoCount = photoCount;
+    }
+
+    public boolean isFaceDetectionEnabled() {
+        return mFaceDetectionEnabled;
+    }
+
+    public void setFaceDetectionEnabled(boolean faceDetectionEnabled) {
+        mFaceDetectionEnabled = faceDetectionEnabled;
     }
 }

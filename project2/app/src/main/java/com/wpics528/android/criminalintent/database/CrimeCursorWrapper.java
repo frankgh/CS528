@@ -21,6 +21,7 @@ public class CrimeCursorWrapper extends CursorWrapper {
         int isSolved = getInt(getColumnIndex(CrimeTable.Cols.SOLVED));
         String suspect = getString(getColumnIndex(CrimeTable.Cols.SUSPECT));
         int photoCount = getInt(getColumnIndex(CrimeTable.Cols.PHOTO_COUNT));
+        int isFaceDetectionEnabled = getInt(getColumnIndex(CrimeTable.Cols.FACE_DETECTION));
 
         Crime crime = new Crime(UUID.fromString(uuidString));
         crime.setTitle(title);
@@ -28,6 +29,7 @@ public class CrimeCursorWrapper extends CursorWrapper {
         crime.setSolved(isSolved != 0);
         crime.setSuspect(suspect);
         crime.setPhotoCount(photoCount);
+        crime.setFaceDetectionEnabled(isFaceDetectionEnabled != 0);
 
         return crime;
     }

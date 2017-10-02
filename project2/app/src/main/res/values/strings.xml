@@ -25,4 +25,5 @@
     <string name="send_report">Send crime report via</string>
     <string name="display_gallery">Display Gallery For This Crime</string>
     <string name="error_storage">Unable to access media storage</string>
+    <string name="enable_face_detection">Enable Face Detection</string>
 </resources>

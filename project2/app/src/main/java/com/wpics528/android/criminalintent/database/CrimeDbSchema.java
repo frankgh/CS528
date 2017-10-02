@@ -11,6 +11,7 @@ public class CrimeDbSchema {
             public static final String SOLVED = "solved";
             public static final String SUSPECT = "suspect";
             public static final String PHOTO_COUNT = "photo_count";
+            public static final String FACE_DETECTION = "face_detection";
         }
     }
 }

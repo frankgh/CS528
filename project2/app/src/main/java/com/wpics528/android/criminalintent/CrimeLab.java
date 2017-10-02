@@ -48,6 +48,7 @@ public class CrimeLab {
         values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
         values.put(CrimeTable.Cols.SUSPECT, crime.getSuspect());
         values.put(CrimeTable.Cols.PHOTO_COUNT, crime.getPhotoCount());
+        values.put(CrimeTable.Cols.FACE_DETECTION, crime.isFaceDetectionEnabled() ? 1 : 0);
 
         return values;
     }
