@@ -2,10 +2,12 @@ package com.wpics528.android.criminalintent;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,6 +23,7 @@ public class CrimeListFragment extends Fragment {
 
     private static final String SAVED_SUBTITLE_VISIBLE = "subtitle";
 
+    private FloatingActionButton mAddCrimeFloatingActionButton;
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
     private boolean mSubtitleVisible;
@@ -36,9 +39,19 @@ public class CrimeListFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_crime_list, container, false);
 
-        mCrimeRecyclerView = (RecyclerView) view
-                .findViewById(R.id.crime_recycler_view);
+        mCrimeRecyclerView = view.findViewById(R.id.crime_recycler_view);
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+
+        mAddCrimeFloatingActionButton = view.findViewById(R.id.add_button);
+        mAddCrimeFloatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Crime crime = new Crime();
+                CrimeLab.get(getActivity()).addCrime(crime);
+                Intent intent = CrimePagerActivity.newIntent(getActivity(), crime.getId());
+                startActivity(intent);
+            }
+        });
 
         if (savedInstanceState != null) {
             mSubtitleVisible = savedInstanceState.getBoolean(SAVED_SUBTITLE_VISIBLE);
@@ -77,13 +90,6 @@ public class CrimeListFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.menu_item_new_crime:
-                Crime crime = new Crime();
-                CrimeLab.get(getActivity()).addCrime(crime);
-                Intent intent = CrimePagerActivity
-                        .newIntent(getActivity(), crime.getId());
-                startActivity(intent);
-                return true;
             case R.id.menu_item_show_subtitle:
                 mSubtitleVisible = !mSubtitleVisible;
                 getActivity().invalidateOptionsMenu();
@@ -122,7 +128,7 @@ public class CrimeListFragment extends Fragment {
         updateSubtitle();
     }
 
-    private class CrimeHolder extends RecyclerView.ViewHolder 
+    private class CrimeHolder extends RecyclerView.ViewHolder
             implements View.OnClickListener {
 
         private TextView mTitleTextView;
@@ -135,15 +141,16 @@ public class CrimeListFragment extends Fragment {
             super(itemView);
             itemView.setOnClickListener(this);
 
-            mTitleTextView = (TextView) itemView.findViewById(R.id.list_item_crime_title_text_view);
-            mDateTextView = (TextView) itemView.findViewById(R.id.list_item_crime_date_text_view);
-            mSolvedCheckBox = (CheckBox) itemView.findViewById(R.id.list_item_crime_solved_check_box);
+            mTitleTextView = itemView.findViewById(R.id.list_item_crime_title_text_view);
+            mDateTextView = itemView.findViewById(R.id.list_item_crime_date_text_view);
+            mSolvedCheckBox = itemView.findViewById(R.id.list_item_crime_solved_check_box);
         }
 
         public void bindCrime(Crime crime) {
             mCrime = crime;
             mTitleTextView.setText(mCrime.getTitle());
-            mDateTextView.setText(mCrime.getDate().toString());
+            mDateTextView.setText(DateUtils.
+                    getRelativeTimeSpanString(mCrime.getDate().getTime(), System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS));
             mSolvedCheckBox.setChecked(mCrime.isSolved());
         }
 

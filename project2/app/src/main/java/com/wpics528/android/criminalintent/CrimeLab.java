@@ -15,6 +15,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -136,6 +137,16 @@ public class CrimeLab {
         }
 
         return new File(storageDir, photoFileName[0]);
+    }
+
+    public List<String> getPhotoFileList(Crime crime) {
+        File storageDir = getStorageDir(crime);
+
+        return Arrays.asList(storageDir.list(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(".jpg");
+            }
+        }));
     }
 
     public void updateCrime(Crime crime) {
