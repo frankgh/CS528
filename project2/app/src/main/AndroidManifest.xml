@@ -1,24 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.wpics528.android.criminalintent" >
+    package="com.wpics528.android.criminalintent">
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-                     android:maxSdkVersion="18"
-        />
-    <uses-feature android:name="android.hardware.camera"
-                  android:required="false"
-        />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="18" />
+    <uses-permission android:name="android.permissions.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme" >
+        android:theme="@style/AppTheme">
         <activity
             android:name="com.wpics528.android.criminalintent.CrimePagerActivity"
             android:label="@string/app_name"
-            android:parentActivityName="com.wpics528.android.criminalintent.CrimeListActivity">
-        </activity>
+            android:parentActivityName="com.wpics528.android.criminalintent.CrimeListActivity"></activity>
         <activity android:name="com.wpics528.android.criminalintent.CrimeListActivity">
 
             <intent-filter>
@@ -28,6 +29,16 @@
             </intent-filter>
 
         </activity>
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
     </application>
 
 </manifest>

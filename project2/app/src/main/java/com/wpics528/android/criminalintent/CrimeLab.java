@@ -8,12 +8,16 @@ import android.os.Environment;
 
 import com.wpics528.android.criminalintent.database.CrimeBaseHelper;
 import com.wpics528.android.criminalintent.database.CrimeCursorWrapper;
-
 import com.wpics528.android.criminalintent.database.CrimeDbSchema.CrimeTable;
 
 import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class CrimeLab {
@@ -22,6 +26,12 @@ public class CrimeLab {
     private Context mContext;
     private SQLiteDatabase mDatabase;
 
+    private CrimeLab(Context context) {
+        mContext = context.getApplicationContext();
+        mDatabase = new CrimeBaseHelper(mContext)
+                .getWritableDatabase();
+    }
+
     public static CrimeLab get(Context context) {
         if (sCrimeLab == null) {
             sCrimeLab = new CrimeLab(context);
@@ -29,12 +39,17 @@ public class CrimeLab {
         return sCrimeLab;
     }
 
-    private CrimeLab(Context context) {
-        mContext = context.getApplicationContext();
-        mDatabase = new CrimeBaseHelper(mContext)
-                .getWritableDatabase();
-    }
+    private static ContentValues getContentValues(Crime crime) {
+        ContentValues values = new ContentValues();
+        values.put(CrimeTable.Cols.UUID, crime.getId().toString());
+        values.put(CrimeTable.Cols.TITLE, crime.getTitle());
+        values.put(CrimeTable.Cols.DATE, crime.getDate().getTime());
+        values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
+        values.put(CrimeTable.Cols.SUSPECT, crime.getSuspect());
+        values.put(CrimeTable.Cols.PHOTO_COUNT, crime.getPhotoCount());
 
+        return values;
+    }
 
     public void addCrime(Crime c) {
         ContentValues values = getContentValues(c);
@@ -60,7 +75,7 @@ public class CrimeLab {
     public Crime getCrime(UUID id) {
         CrimeCursorWrapper cursor = queryCrimes(
                 CrimeTable.Cols.UUID + " = ?",
-                new String[] { id.toString() }
+                new String[]{id.toString()}
         );
 
         try {
@@ -75,19 +90,52 @@ public class CrimeLab {
         }
     }
 
-    public File getPhotoFile(Crime crime) {
-        File externalFilesDir = mContext
-                .getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+    private File getStorageDir(final Crime crime) {
+        File externalFilesDir = null;
+        String state = Environment.getExternalStorageState();
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            externalFilesDir = mContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        }
 
         if (externalFilesDir == null) {
+            externalFilesDir = mContext.getFilesDir();
+        }
+
+        File storageDir = new File(externalFilesDir, crime.getId().toString());
+        storageDir.mkdirs();
+
+        return storageDir;
+    }
+
+    public File createImageFile(final Crime crime) throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+        String imageFileName = "IMG_" + timeStamp + "_";
+        File storageDir = getStorageDir(crime);
+
+        // Save a file: path for use with ACTION_VIEW intents
+        // mCurrentPhotoPath = "file:" + image.getAbsolutePath();
+        return File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+    }
+
+    public File getPhotoFile(Crime crime) {
+        File storageDir = getStorageDir(crime);
+
+        String[] photoFileName = storageDir.list(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.toLowerCase().endsWith(".jpg");
+            }
+        });
+
+        if (photoFileName == null || photoFileName.length == 0) {
             return null;
         }
 
-        return new File(externalFilesDir, crime.getPhotoFilename());
-    }
-
-    public List<File> getPhotoFileList(Crime mCrime) {
-        return null;
+        return new File(storageDir, photoFileName[0]);
     }
 
     public void updateCrime(Crime crime) {
@@ -96,18 +144,7 @@ public class CrimeLab {
 
         mDatabase.update(CrimeTable.NAME, values,
                 CrimeTable.Cols.UUID + " = ?",
-                new String[] { uuidString });
-    }
-
-    private static ContentValues getContentValues(Crime crime) {
-        ContentValues values = new ContentValues();
-        values.put(CrimeTable.Cols.UUID, crime.getId().toString());
-        values.put(CrimeTable.Cols.TITLE, crime.getTitle());
-        values.put(CrimeTable.Cols.DATE, crime.getDate().getTime());
-        values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
-        values.put(CrimeTable.Cols.SUSPECT, crime.getSuspect());
-
-        return values;
+                new String[]{uuidString});
     }
 
     private CrimeCursorWrapper queryCrimes(String whereClause, String[] whereArgs) {

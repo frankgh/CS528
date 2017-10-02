@@ -4,11 +4,10 @@ import android.database.Cursor;
 import android.database.CursorWrapper;
 
 import com.wpics528.android.criminalintent.Crime;
+import com.wpics528.android.criminalintent.database.CrimeDbSchema.CrimeTable;
 
 import java.util.Date;
 import java.util.UUID;
-
-import com.wpics528.android.criminalintent.database.CrimeDbSchema.CrimeTable;
 
 public class CrimeCursorWrapper extends CursorWrapper {
     public CrimeCursorWrapper(Cursor cursor) {
@@ -21,12 +20,14 @@ public class CrimeCursorWrapper extends CursorWrapper {
         long date = getLong(getColumnIndex(CrimeTable.Cols.DATE));
         int isSolved = getInt(getColumnIndex(CrimeTable.Cols.SOLVED));
         String suspect = getString(getColumnIndex(CrimeTable.Cols.SUSPECT));
+        int photoCount = getInt(getColumnIndex(CrimeTable.Cols.PHOTO_COUNT));
 
         Crime crime = new Crime(UUID.fromString(uuidString));
         crime.setTitle(title);
         crime.setDate(new Date(date));
         crime.setSolved(isSolved != 0);
         crime.setSuspect(suspect);
+        crime.setPhotoCount(photoCount);
 
         return crime;
     }

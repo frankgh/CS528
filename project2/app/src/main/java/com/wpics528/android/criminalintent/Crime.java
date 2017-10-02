@@ -10,6 +10,7 @@ public class Crime {
     private Date mDate;
     private boolean mSolved;
     private String mSuspect;
+    private int mPhotoCount;
 
     public Crime() {
         this(UUID.randomUUID());
@@ -19,6 +20,7 @@ public class Crime {
         mId = id;
         mDate = new Date();
     }
+
     public UUID getId() {
         return mId;
     }
@@ -55,7 +57,11 @@ public class Crime {
         mSuspect = suspect;
     }
 
-    public String getPhotoFilename() {
-        return "IMG_" + getId().toString() + ".jpg";
+    public int getPhotoCount() {
+        return mPhotoCount;
+    }
+
+    public void setPhotoCount(int photoCount) {
+        mPhotoCount = photoCount;
     }
 }
