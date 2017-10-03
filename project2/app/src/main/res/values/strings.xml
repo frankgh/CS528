@@ -11,7 +11,7 @@
     <string name="new_crime">New Crime</string>
     <string name="show_subtitle">Show Subtitle</string>
     <string name="hide_subtitle">Hide Subtitle</string>
-    <string name="subtitle_format">%1$s crimes</string>
+    <string name="subtitle_format">%1$d crimes</string>
     <string name="crime_suspect_text">Choose Suspect</string>
     <string name="crime_report_text">Send Crime Report</string>
     <string name="crime_report">%1$s!
@@ -26,4 +26,12 @@
     <string name="display_gallery">Display Gallery For This Crime</string>
     <string name="error_storage">Unable to access media storage</string>
     <string name="enable_face_detection">Enable Face Detection</string>
+
+    <string name="face_detection_enabled">Face detection\nenabled</string>
+    <string name="face_detection_disabled">Face detection\ndisabled</string>
+
+    <string name="case_solved">Case solved</string>
+    <string name="case_unsolved">Case not solved</string>
+    <string name="gallery_count_one">1 Photo</string>
+    <string name="gallery_count">%1$d Photos</string>
 </resources>
