@@ -38,6 +38,7 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
+        <activity android:name=".CrimeImageGalleryActivity16"></activity>
         <activity android:name=".CrimeImageGalleryActivity"></activity>
     </application>
 
