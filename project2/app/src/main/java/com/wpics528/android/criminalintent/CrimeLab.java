@@ -140,15 +140,14 @@ public class CrimeLab {
         return new File(storageDir, photoFileName[0]);
     }
 
-    public File getPhotoFile(String crimeImageName) {
-        File externalFilesDir = mContext
-                .getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+    public File getPhotoFile(Crime crime, String filename) {
+        File storageDir = getStorageDir(crime);
 
-        if (externalFilesDir == null) {
+        if (storageDir == null) {
             return null;
         }
 
-        return new File(externalFilesDir, crimeImageName);
+        return new File(storageDir, filename);
     }
 
     public List<String> getPhotoFileList(Crime crime) {

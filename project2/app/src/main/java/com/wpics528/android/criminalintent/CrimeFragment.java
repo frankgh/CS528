@@ -223,11 +223,17 @@ public class CrimeFragment extends Fragment {
         mViewGalleryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mCrime.getPhotoCount() < 16) {
 
-                } else {
+                Intent intent = new Intent(getActivity(), CrimeImageGalleryActivity.class);
+                intent.putExtra(CrimePagerActivity.EXTRA_CRIME_ID, mCrime.getId());
 
-                }
+                startActivity(intent);
+
+//                if (mCrime.getPhotoCount() < 16) {
+//
+//                } else {
+//
+//                }
             }
         });
 
