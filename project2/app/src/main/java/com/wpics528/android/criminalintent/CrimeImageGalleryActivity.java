@@ -36,10 +36,6 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
         UUID crimeId = (UUID) getIntent().getSerializableExtra(CrimePagerActivity.EXTRA_CRIME_ID);
         mCrime = CrimeLab.get(this).getCrime(crimeId);
         mPhotoFileList = CrimeLab.get(this).getPhotoFileList(mCrime);
-        String subtitle = Integer.toString(mPhotoFileList.size())+" "+ getString(R.string.photos_string);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle(R.string.camera_string);
-        getSupportActionBar().setSubtitle(subtitle);
         mCrimeImageRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mCrimeImageRecyclerView.setHasFixedSize(true);
         mCrimeImageRecyclerView.setItemViewCacheSize(4);
@@ -48,12 +44,7 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
         updateImageUI();
     }
 
-    @Override
-    public boolean onSupportNavigateUp(){
-        finish();
-        return true;
-    }
-
+   
     private void updateImageUI() {
         mAdapter = new CrimeImageListAdapter(this, mPhotoFileList);
         mCrimeImageRecyclerView.setAdapter(mAdapter);
