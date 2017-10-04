@@ -3,6 +3,7 @@ package com.wpics528.android.criminalintent;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -42,23 +43,26 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(R.string.camera_string);
         getSupportActionBar().setSubtitle(getString(R.string.photos_string, mCrime.getPhotoCount()));
-        mCrimeImageRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        if (mCrime.getPhotoCount() < 16) {
+            mCrimeImageRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            mCrimeImageRecyclerView.setItemViewCacheSize(4);
+        } else {
+            mCrimeImageRecyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+        }
+
         mCrimeImageRecyclerView.setHasFixedSize(true);
-        mCrimeImageRecyclerView.setItemViewCacheSize(4);
         mCrimeImageRecyclerView.setDrawingCacheEnabled(true);
         mCrimeImageRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-        updateImageUI();
+
+        mAdapter = new CrimeImageListAdapter(this, mPhotoFileList);
+        mCrimeImageRecyclerView.setAdapter(mAdapter);
     }
 
     @Override
     public boolean onSupportNavigateUp() {
         finish();
         return true;
-    }
-
-    private void updateImageUI() {
-        mAdapter = new CrimeImageListAdapter(this, mPhotoFileList);
-        mCrimeImageRecyclerView.setAdapter(mAdapter);
     }
 
     private class CrimeImageListHolder extends RecyclerView.ViewHolder {
