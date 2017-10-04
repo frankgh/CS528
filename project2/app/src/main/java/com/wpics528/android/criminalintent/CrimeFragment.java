@@ -189,7 +189,6 @@ public class CrimeFragment extends Fragment {
         }
 
         final Intent captureImageCheck = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
         boolean canTakePhoto = captureImageCheck.resolveActivity(packageManager) != null;
         mPhotoButton.setEnabled(canTakePhoto);
 
@@ -218,23 +217,15 @@ public class CrimeFragment extends Fragment {
                 }
             });
         }
-        updatePhotoView();
 
+        updatePhotoView();
         updateGallery();
         mViewGalleryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 Intent intent = new Intent(getActivity(), CrimeImageGalleryActivity.class);
                 intent.putExtra(CrimePagerActivity.EXTRA_CRIME_ID, mCrime.getId());
-
                 startActivity(intent);
-
-//                if (mCrime.getPhotoCount() < 16) {
-//
-//                } else {
-//
-//                }
             }
         });
 
