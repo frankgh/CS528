@@ -92,7 +92,7 @@ public class CrimeLab {
         }
     }
 
-    private File getStorageDir(final Crime crime) {
+    public File getStorageDir(final Crime crime) {
         File externalFilesDir = null;
         String state = Environment.getExternalStorageState();
         if (Environment.MEDIA_MOUNTED.equals(state)) {

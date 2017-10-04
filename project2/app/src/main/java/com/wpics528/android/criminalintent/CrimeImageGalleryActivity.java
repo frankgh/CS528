@@ -1,7 +1,6 @@
 package com.wpics528.android.criminalintent;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -9,7 +8,10 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
+
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.util.List;
@@ -22,7 +24,7 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
 
     @BindView(R.id.crimeImage_recycler_view)
     RecyclerView mCrimeImageRecyclerView;
-    private File mPhotoFile;
+    private File mStorageFile;
     private Crime mCrime;
     private List<String> mPhotoFileList;
     private CrimeImageListAdapter mAdapter;
@@ -35,11 +37,11 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
 
         UUID crimeId = (UUID) getIntent().getSerializableExtra(CrimePagerActivity.EXTRA_CRIME_ID);
         mCrime = CrimeLab.get(this).getCrime(crimeId);
+        mStorageFile = CrimeLab.get(this).getStorageDir(mCrime);
         mPhotoFileList = CrimeLab.get(this).getPhotoFileList(mCrime);
-        String subtitle = Integer.toString(mPhotoFileList.size())+" "+ getString(R.string.photos_string);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(R.string.camera_string);
-        getSupportActionBar().setSubtitle(subtitle);
+        getSupportActionBar().setSubtitle(getString(R.string.photos_string, mCrime.getPhotoCount()));
         mCrimeImageRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mCrimeImageRecyclerView.setHasFixedSize(true);
         mCrimeImageRecyclerView.setItemViewCacheSize(4);
@@ -49,7 +51,7 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onSupportNavigateUp(){
+    public boolean onSupportNavigateUp() {
         finish();
         return true;
     }
@@ -68,12 +70,6 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
             super(itemView);
             mActivity = activity;
             crimeImageView = itemView.findViewById(R.id.list_item_crime_Image_crimeImageView);
-        }
-
-        public void bindCrimeImage(File image) {
-            mPhotoFile = image;
-            Bitmap bitmap = PictureUtils.getScaledBitmap(mPhotoFile.getPath(), mActivity);
-            crimeImageView.setImageBitmap(bitmap);
         }
     }
 
@@ -96,10 +92,25 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onBindViewHolder(CrimeImageListHolder holder, int position) {
-            String photoFilename = mCrimePics.get(position);
-            mPhotoFile = CrimeLab.get(mActivity).getPhotoFile(mCrime, photoFilename);
-            holder.bindCrimeImage(mPhotoFile);
+        public void onBindViewHolder(final CrimeImageListHolder holder, int position) {
+            final String currentPhotoPath = "file:" + mStorageFile.getAbsolutePath();
+            final String photoFilename = mCrimePics.get(position);
+
+            holder.crimeImageView.getViewTreeObserver()
+                    .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                        // Wait until layout to call Picasso
+                        @Override
+                        public void onGlobalLayout() {
+                            // Ensure we call this only once
+                            holder.crimeImageView.getViewTreeObserver()
+                                    .removeOnGlobalLayoutListener(this);
+
+                            Picasso.with(mActivity)
+                                    .load(currentPhotoPath + "/" + photoFilename)
+                                    .resize(holder.crimeImageView.getWidth(), 0)
+                                    .into(holder.crimeImageView);
+                        }
+                    });
         }
 
         @Override

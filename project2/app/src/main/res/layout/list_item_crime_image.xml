@@ -7,7 +7,8 @@
         android:id="@+id/list_item_crime_Image_crimeImageView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:adjustViewBounds="true"
-        android:scaleType="fitXY" />
+        android:layout_marginBottom="4dp"
+        android:cropToPadding="true"
+        android:scaleType="centerInside" />
+
 </RelativeLayout>
