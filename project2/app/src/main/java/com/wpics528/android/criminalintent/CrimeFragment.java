@@ -36,7 +36,23 @@ import java.util.UUID;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
-
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Bundle;
+import android.util.SparseArray;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.face.Face;
+import com.google.android.gms.vision.face.FaceDetector;
 public class CrimeFragment extends Fragment {
 
     private static final String TAG = "CrimeFragment";
@@ -81,6 +97,7 @@ public class CrimeFragment extends Fragment {
     ImageButton mPhotoButton;
     @BindView(R.id.crime_photo)
     ImageView mPhotoView;
+
 
     private Crime mCrime;
     private File mPhotoFile;
@@ -328,6 +345,7 @@ public class CrimeFragment extends Fragment {
         if (mCrime.isFaceDetectionEnabled()) {
             mEnableFaceDetectionButton.setImageResource(R.drawable.ic_tag_faces);
             mEnableFaceDetectionEditText.setText(R.string.face_detection_enabled);
+
         } else {
             mEnableFaceDetectionButton.setImageResource(R.drawable.ic_tag_faces_off);
             mEnableFaceDetectionEditText.setText(R.string.face_detection_disabled);
