@@ -5,6 +5,12 @@ import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -17,6 +23,7 @@ import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +33,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.face.Face;
+import com.google.android.gms.vision.face.FaceDetector;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -236,6 +247,7 @@ public class CrimeFragment extends Fragment {
             public void onClick(View view) {
                 mCrime.setFaceDetectionEnabled(!mCrime.isFaceDetectionEnabled());
                 updateFaceDetection();
+                updatePhotoView();
             }
         });
 
@@ -363,7 +375,53 @@ public class CrimeFragment extends Fragment {
                     .load(mPhotoFile)
                     .fit()
                     .centerCrop()
-                    .into(mPhotoView);
+                    .into(mPhotoView, new Callback() {
+                        @Override
+                        public void onSuccess() {
+
+                            if (!mCrime.isFaceDetectionEnabled()){
+                                return;
+                            }
+
+                            Bitmap myBitmap = ((BitmapDrawable) mPhotoView.getDrawable()).getBitmap();
+
+                            Paint myRectPaint = new Paint();
+                            myRectPaint.setStrokeWidth(5);
+                            myRectPaint.setColor(Color.RED);
+                            myRectPaint.setStyle(Paint.Style.STROKE);
+
+                            Bitmap tempBitmap = Bitmap.createBitmap(myBitmap.getWidth(), myBitmap.getHeight(), Bitmap.Config.RGB_565);
+                            Canvas tempCanvas = new Canvas(tempBitmap);
+                            tempCanvas.drawBitmap(myBitmap, 0, 0, null);
+
+                            FaceDetector faceDetector = new
+                                    FaceDetector.Builder(getContext()).setTrackingEnabled(false)
+                                    .build();
+                            if (!faceDetector.isOperational()) {
+
+                                return;
+                            }
+
+                            Frame frame = new Frame.Builder().setBitmap(myBitmap).build();
+                            SparseArray<Face> faces = faceDetector.detect(frame);
+
+                            if (faces.size() == 0) return;
+
+                            for (int i = 0; i < faces.size(); i++) {
+                                Face thisFace = faces.valueAt(i);
+                                float x1 = thisFace.getPosition().x;
+                                float y1 = thisFace.getPosition().y;
+                                float x2 = x1 + thisFace.getWidth();
+                                float y2 = y1 + thisFace.getHeight();
+                                tempCanvas.drawRoundRect(new RectF(x1, y1, x2, y2), 2, 2, myRectPaint);
+                            }
+                            mPhotoView.setImageDrawable(new BitmapDrawable(getResources(), tempBitmap));
+                        }
+
+                        @Override
+                        public void onError() {
+                        }
+                    });
         }
     }
 
