@@ -97,6 +97,10 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
             mActivity = activity;
             mCrimePics = crimePics;
         }
+        @Override
+        public int getItemViewType(int position) {
+            return position;
+        }
 
         @Override
         public CrimeImageListHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -107,7 +111,7 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onBindViewHolder(final CrimeImageListHolder holder, int position) {
+        public void onBindViewHolder(final CrimeImageListHolder holder, final int position) {
             final String currentPhotoPath = "file:" + mStorageFile.getAbsolutePath();
             final String photoFilename = mCrimePics.get(position);
 
@@ -119,6 +123,11 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
                             // Ensure we call this only once
                             holder.crimeImageView.getViewTreeObserver()
                                     .removeOnGlobalLayoutListener(this);
+                            int pos = getItemViewType(position);
+                            if(mCrimePics.get(pos) == null) {
+
+                                holder.crimeImageView.setVisibility(View.GONE);
+                            } else {
 
                             Picasso.with(mActivity)
                                     .load(currentPhotoPath + "/" + photoFilename)
@@ -170,7 +179,7 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
                                         @Override
                                         public void onError() {
                                         }
-                                    });
+                                    });}
 
                         }
                     });
