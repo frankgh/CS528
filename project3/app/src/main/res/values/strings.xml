@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Project 3</string>
+    <string name="fuller_labs_label">Visits to Fuller Labs geoFence:</string>
+    <string name="library_label">Visits to Library geoFence:</string>
+    <string name="geofence_text_placeholder">0</string>
+    <string name="activity_running">You Are Running</string>
+    <string name="activity_walking">You Are Walking</string>
+    <string name="activity_still">You Are Still</string>
+    <string name="title_activity_maps">Map</string>
+</resources>
