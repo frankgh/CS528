@@ -7,4 +7,8 @@
     <string name="activity_walking">You Are Walking</string>
     <string name="activity_still">You Are Still</string>
     <string name="title_activity_maps">Map</string>
+
+    <string name="activity_summary_running">You have just ran for %1$d min, %2$d seconds</string>
+    <string name="activity_summary_walking">You have just walked for %1$d min, %2$d seconds</string>
+    <string name="activity_summary_still">You were still for %1$d min, %2$d seconds</string>
 </resources>
