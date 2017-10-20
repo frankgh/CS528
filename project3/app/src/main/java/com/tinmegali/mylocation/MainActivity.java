@@ -191,8 +191,12 @@ public class MainActivity extends AppCompatActivity
     public void onMapReady(GoogleMap googleMap) {
         Log.d(TAG, "onMapReady()");
         map = googleMap;
-        map.setOnMapClickListener(this);
-        map.setOnMarkerClickListener(this);
+        //map.setOnMapClickListener(this);
+        LatLng fullerLabs = new LatLng(42.274978, -71.806632);
+        markerForGeofence(fullerLabs);
+        LatLng gordonLib = new LatLng(42.284978, -71.806632);
+        markersForGeofence(fullerLabs, gordonLib);
+        //map.setOnMarkerClickListener(this);
     }
 
     @Override
@@ -237,7 +241,7 @@ public class MainActivity extends AppCompatActivity
     public void onConnected(@Nullable Bundle bundle) {
         Log.i(TAG, "onConnected()");
         getLastKnownLocation();
-        recoverGeofenceMarker();
+        //recoverGeofenceMarker();
     }
 
     // GoogleApiClient.ConnectionCallbacks suspended
@@ -300,7 +304,9 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    private Marker geoFenceMarker;
+    private Marker geoFenceMarker1;
+    private Marker geoFenceMarker2;
+
     private void markerForGeofence(LatLng latLng) {
         Log.i(TAG, "markerForGeofence("+latLng+")");
         String title = latLng.latitude + ", " + latLng.longitude;
@@ -311,21 +317,65 @@ public class MainActivity extends AppCompatActivity
                 .title(title);
         if ( map!=null ) {
             // Remove last geoFenceMarker
-            if (geoFenceMarker != null)
-                geoFenceMarker.remove();
+            if (geoFenceMarker1 != null)
+                geoFenceMarker1.remove();
 
-            geoFenceMarker = map.addMarker(markerOptions);
+            geoFenceMarker1 = map.addMarker(markerOptions);
+
+            if (geoFenceMarker2 != null)
+                geoFenceMarker2.remove();
+
+            geoFenceMarker2 = map.addMarker(markerOptions);
 
         }
     }
 
+    private void markersForGeofence(LatLng latLng1, LatLng latLng2) {
+        Log.i(TAG, "markerForGeofence("+latLng1+latLng2+")");
+        String title1 = latLng1.latitude + ", " + latLng1.longitude;
+        // Define marker options
+        MarkerOptions markerOptions1 = new MarkerOptions()
+                .position(latLng1)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+                .title(title1);
+        String title2 = latLng2.latitude + ", " + latLng2.longitude;
+        // Define marker options
+        MarkerOptions markerOptions2 = new MarkerOptions()
+                .position(latLng2)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+                .title(title2);
+        if ( map!=null ) {
+            // Remove last geoFenceMarker
+            if (geoFenceMarker1 != null)
+                geoFenceMarker1.remove();
+
+            geoFenceMarker1 = map.addMarker(markerOptions1);
+
+            if (geoFenceMarker2 != null)
+                geoFenceMarker2.remove();
+
+            geoFenceMarker2 = map.addMarker(markerOptions2);
+        }
+
+    }
+
+
     // Start Geofence creation process
     private void startGeofence() {
-        Log.i(TAG, "startGeofence()");
-        if( geoFenceMarker != null ) {
-            Geofence geofence = createGeofence( geoFenceMarker.getPosition(), GEOFENCE_RADIUS );
-            GeofencingRequest geofenceRequest = createGeofenceRequest( geofence );
-            addGeofence( geofenceRequest );
+        Log.i(TAG, "startGeofencenew()");
+
+        //Geofence geofence2 = createGeofence( fullerLabs, GEOFENCE_RADIUS );
+        //GeofencingRequest geofenceRequest2 = createGeofenceRequest( geofence2 );
+        //addGeofence( geofenceRequest2 );
+        if( geoFenceMarker1 != null ) {
+            Geofence geofence1 = createGeofence( geoFenceMarker1.getPosition(), GEOFENCE_RADIUS );
+            GeofencingRequest geofenceRequest1 = createGeofenceRequest( geofence1 );
+            addGeofence( geofenceRequest1 );
+
+            Geofence geofence2 = createGeofence( geoFenceMarker2.getPosition(), GEOFENCE_RADIUS );
+            GeofencingRequest geofenceRequest2 = createGeofenceRequest( geofence2 );
+            addGeofence( geofenceRequest2 );
+            //fuller labs lat: 42.274978 , long: -71.806632
         } else {
             Log.e(TAG, "Geofence marker is null");
         }
@@ -337,7 +387,7 @@ public class MainActivity extends AppCompatActivity
 
     // Create a Geofence
     private Geofence createGeofence( LatLng latLng, float radius ) {
-        Log.d(TAG, "createGeofence");
+        Log.d(TAG, "createGeofence" + latLng);
         return new Geofence.Builder()
                 .setRequestId(GEOFENCE_REQ_ID)
                 .setCircularRegion( latLng.latitude, latLng.longitude, radius)
@@ -391,19 +441,30 @@ public class MainActivity extends AppCompatActivity
     }
 
     // Draw Geofence circle on GoogleMap
-    private Circle geoFenceLimits;
+    private Circle geoFenceLimits1;
+    private Circle geoFenceLimits2;
     private void drawGeofence() {
         Log.d(TAG, "drawGeofence()");
 
-        if ( geoFenceLimits != null )
-            geoFenceLimits.remove();
+        if ( geoFenceLimits1 != null )
+            geoFenceLimits1.remove();
 
-        CircleOptions circleOptions = new CircleOptions()
-                .center( geoFenceMarker.getPosition())
+        if ( geoFenceLimits2 != null )
+            geoFenceLimits2.remove();
+
+        CircleOptions circleOptions1 = new CircleOptions()
+                .center( geoFenceMarker1.getPosition())
                 .strokeColor(Color.argb(50, 70,70,70))
                 .fillColor( Color.argb(100, 150,150,150) )
                 .radius( GEOFENCE_RADIUS );
-        geoFenceLimits = map.addCircle( circleOptions );
+        geoFenceLimits1 = map.addCircle( circleOptions1 );
+
+        CircleOptions circleOptions2 = new CircleOptions()
+                .center( geoFenceMarker2.getPosition())
+                .strokeColor(Color.argb(50, 70,70,70))
+                .fillColor( Color.argb(100, 150,150,150) )
+                .radius( GEOFENCE_RADIUS );
+        geoFenceLimits2 = map.addCircle( circleOptions2 );
     }
 
     private final String KEY_GEOFENCE_LAT = "GEOFENCE LATITUDE";
@@ -415,8 +476,10 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences sharedPref = getPreferences( Context.MODE_PRIVATE );
         SharedPreferences.Editor editor = sharedPref.edit();
 
-        editor.putLong( KEY_GEOFENCE_LAT, Double.doubleToRawLongBits( geoFenceMarker.getPosition().latitude ));
-        editor.putLong( KEY_GEOFENCE_LON, Double.doubleToRawLongBits( geoFenceMarker.getPosition().longitude ));
+        editor.putLong( KEY_GEOFENCE_LAT, Double.doubleToRawLongBits( geoFenceMarker1.getPosition().latitude ));
+        editor.putLong( KEY_GEOFENCE_LON, Double.doubleToRawLongBits( geoFenceMarker1.getPosition().longitude ));
+        editor.putLong( KEY_GEOFENCE_LAT, Double.doubleToRawLongBits( geoFenceMarker2.getPosition().latitude ));
+        editor.putLong( KEY_GEOFENCE_LON, Double.doubleToRawLongBits( geoFenceMarker2.getPosition().longitude ));
         editor.apply();
     }
 
@@ -453,10 +516,14 @@ public class MainActivity extends AppCompatActivity
 
     private void removeGeofenceDraw() {
         Log.d(TAG, "removeGeofenceDraw()");
-        if ( geoFenceMarker != null)
-            geoFenceMarker.remove();
-        if ( geoFenceLimits != null )
-            geoFenceLimits.remove();
+        if ( geoFenceMarker1 != null)
+            geoFenceMarker1.remove();
+        if ( geoFenceMarker2 != null)
+            geoFenceMarker2.remove();
+        if ( geoFenceLimits1 != null )
+            geoFenceLimits1.remove();
+        if ( geoFenceLimits2 != null )
+            geoFenceLimits2.remove();
     }
 
 }
