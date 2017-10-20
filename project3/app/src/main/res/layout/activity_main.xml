@@ -8,7 +8,9 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:orientation="vertical"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.tinmegali.mylocation.MainActivity">
+    android:weightSum="3"
+    tools:context="com.tinmegali.mylocation.MainActivity"
+    android:background="#414a4c">
 
     <!-- Line with Latitude and Longitude -->
     <LinearLayout
@@ -40,11 +42,78 @@
             android:text="Long: " />
     </LinearLayout>
 
-    <!--GoogleMap fragment-->
-    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-        android:name="com.google.android.gms.maps.MapFragment"
-        android:id="@+id/map"
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="0px"
+        android:orientation="horizontal"
+        android:weightSum="1"
+        android:layout_weight=".15">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight=".3"
+            android:visibility="invisible"/>
+    <TextView
+        android:id="@+id/lab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:layout_weight="0.3"
+        android:textSize="18dp"
+        android:text="Visits to Fuller labs geoFence: " />
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0px"
+        android:orientation="horizontal"
+        android:weightSum="1"
+        android:layout_weight=".15">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight=".3"
+            android:visibility="invisible"/>
+    <!--Longitude-->
+    <TextView
+        android:id="@+id/lib"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/white"
+        android:layout_weight="0.1"
+        android:textSize="18dp"
+        android:text="Visits to Library geoFence: " />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0px"
+        android:orientation="horizontal"
+        android:weightSum="3"
+        android:layout_weight="1.4">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight=".5"
+            android:visibility="invisible"/>
+
+        <!--GoogleMap fragment-->
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+            android:name="com.google.android.gms.maps.MapFragment"
+            android:id="@+id/map"
+            android:layout_width="0px"
+            android:layout_height="fill_parent"
+            android:layout_weight="2"
+            android:layout_gravity="center"/>
+
+
+    </LinearLayout>
 
 </LinearLayout>

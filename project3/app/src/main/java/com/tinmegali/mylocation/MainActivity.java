@@ -58,15 +58,25 @@ public class MainActivity extends AppCompatActivity
     private Location lastLocation;
 
     private TextView textLat, textLong;
+    private TextView textLib, textLab;
 
     private MapFragment mapFragment;
-
+    private int fullerCount = 0;
+    private int gordonCount = 0;
     private static final String NOTIFICATION_MSG = "NOTIFICATION MSG";
     // Create a Intent send by the notification
+
+
     public static Intent makeNotificationIntent(Context context, String msg) {
+
         Intent intent = new Intent( context, MainActivity.class );
         intent.putExtra( NOTIFICATION_MSG, msg );
         return intent;
+    }
+
+    private void writeNumberOfVisits(int fullerVisits, int gordonVisits) {
+        textLab.setText( "Visits to Fuller labs geoFence: " + fullerVisits );
+        textLib.setText( "Visits to Library geoFence: "  + gordonVisits );
     }
 
     @Override
@@ -75,6 +85,8 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         textLat = (TextView) findViewById(R.id.lat);
         textLong = (TextView) findViewById(R.id.lon);
+        textLab = (TextView) findViewById(R.id.lab);
+        textLib = (TextView) findViewById(R.id.lib);
 
         // initialize GoogleMaps
         initGMaps();
@@ -282,6 +294,8 @@ public class MainActivity extends AppCompatActivity
         markerLocation(new LatLng(location.getLatitude(), location.getLongitude()));
     }
 
+
+
     private void writeLastLocation() {
         writeActualLocation(lastLocation);
     }
@@ -291,7 +305,7 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "markerLocation("+latLng+")");
         String title = latLng.latitude + ", " + latLng.longitude;
         MarkerOptions markerOptions = new MarkerOptions()
-                .position(latLng)
+                .position(latLng) 
                 .title(title);
         if ( map!=null ) {
             if ( locationMarker != null )
