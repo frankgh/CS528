@@ -1,5 +1,5 @@
 package com.tinmegali.mylocation;
-
+import android.app.Service;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -8,9 +8,13 @@ import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.IBinder;
+import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
+import android.os.Handler;
+import android.widget.TextView;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofenceStatusCodes;
@@ -22,16 +26,100 @@ import java.util.List;
 
 public class GeofenceTrasitionService extends IntentService {
 
-    private static final String TAG = GeofenceTrasitionService.class.getSimpleName();
-
     public static final int GEOFENCE_NOTIFICATION_ID = 0;
+
+    private static final String TAG = "GeofenceService";
+    public static final String BROADCAST_ACTION = "com.websmithing.broadcasttest.displayevent";
+    private final Handler handler = new Handler();
+    Intent count_intent;
+    static int lab_counter = 0;
+    static int lib_counter = 0;
 
     public GeofenceTrasitionService() {
         super(TAG);
     }
 
+
+    @Override
+    public void onCreate(){
+        super.onCreate();
+        Log.d(TAG, "entered onCreate");
+        count_intent = new Intent(BROADCAST_ACTION);
+    }
+
+/*
+    @Override
+    public void onStart(Intent intent, int startId) {
+        Log.d(TAG, "entered onStart");
+        handler.removeCallbacks(sendUpdatesToUI);
+        handler.postDelayed(sendUpdatesToUI, 1000); // 1 second
+    }
+
+
+    private Runnable sendUpdatesToUI = new Runnable() {
+        public void run() {
+            Log.d(TAG, "entered run");
+            GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
+
+            // Handling errors
+            if ( geofencingEvent.hasError() ) {
+                String errorMsg = getErrorString(geofencingEvent.getErrorCode() );
+                Log.d( TAG, errorMsg );
+                return;
+            }
+
+            int geoFenceTransition = geofencingEvent.getGeofenceTransition();
+            // Check if the transition type is of interest
+            Log.d(TAG, "geofenceTrans: " + Integer.toString(geoFenceTransition));
+            if ( geoFenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
+                    geoFenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT ) {
+                // Get the geofence that were triggered
+                Log.d(TAG, "In loop");
+                List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+
+                String geofenceTransitionDetails = getGeofenceTrasitionDetails(geoFenceTransition, triggeringGeofences );
+                DisplayLoggingInfo(geofenceTransitionDetails);
+            }
+
+
+            //handler.postDelayed(this, 5000); // 5 seconds
+        }
+    };
+*/
+    private void DisplayLoggingInfo(String dets) {
+        Log.d(TAG, "entered DisplayLoggingInfo");
+        if(dets.equals("Entering Gordon Lib")) {
+            ++lib_counter;
+        } else if(dets.equals("Entering Fuller Labs")){
+            ++lab_counter;
+        }
+        count_intent.putExtra("lib_counter", String.valueOf(lib_counter));
+        count_intent.putExtra("lab_counter", String.valueOf(lab_counter));
+        sendBroadcast(count_intent);
+    }
+
+    private String getGeofenceTrasitionDetails(int geoFenceTransition, List<Geofence> triggeringGeofences) {
+        // get the ID of each geofence triggered
+        Log.d(TAG, "entered getGeofenceTrasitionDetailsNew");
+        ArrayList<String> triggeringGeofencesList = new ArrayList<>();
+        for ( Geofence geofence : triggeringGeofences ) {
+            triggeringGeofencesList.add( geofence.getRequestId() );
+        }
+
+        String status = null;
+        if ( geoFenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ) {
+            status = "Entering ";
+            DisplayLoggingInfo(status + TextUtils.join( ", ", triggeringGeofencesList));
+        }
+        else if ( geoFenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT )
+            status = "Exiting ";
+
+        return status + TextUtils.join( ", ", triggeringGeofencesList);
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
+        Log.d(TAG, "entered onHandleIntent");
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         // Handling errors
         if ( geofencingEvent.hasError() ) {
@@ -42,38 +130,28 @@ public class GeofenceTrasitionService extends IntentService {
 
         int geoFenceTransition = geofencingEvent.getGeofenceTransition();
         // Check if the transition type is of interest
+        Log.d(TAG, "geofenceTrans: " + Integer.toString(geoFenceTransition));
         if ( geoFenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
                 geoFenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT ) {
             // Get the geofence that were triggered
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
-
             String geofenceTransitionDetails = getGeofenceTrasitionDetails(geoFenceTransition, triggeringGeofences );
 
-            // Send notification details as a String
+
             sendNotification( geofenceTransitionDetails );
         }
     }
 
 
-    private String getGeofenceTrasitionDetails(int geoFenceTransition, List<Geofence> triggeringGeofences) {
-        // get the ID of each geofence triggered
-        ArrayList<String> triggeringGeofencesList = new ArrayList<>();
-        for ( Geofence geofence : triggeringGeofences ) {
-            triggeringGeofencesList.add( geofence.getRequestId() );
-        }
-
-        String status = null;
-        if ( geoFenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER )
-            status = "Entering ";
-        else if ( geoFenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT )
-            status = "Exiting ";
-        return status + TextUtils.join( ", ", triggeringGeofencesList);
-    }
+    int fullerCount = 0;
+    int gordonCount = 0;
+    private TextView textLib, textLab;
 
     private void sendNotification( String msg ) {
         Log.i(TAG, "sendNotification: " + msg );
 
         // Intent to start the main Activity
+
         Intent notificationIntent = MainActivity.makeNotificationIntent(
                 getApplicationContext(), msg
         );
@@ -95,6 +173,7 @@ public class GeofenceTrasitionService extends IntentService {
 
     // Create notification
     private Notification createNotification(String msg, PendingIntent notificationPendingIntent) {
+        Log.d(TAG, "entered createNotification");
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this);
         notificationBuilder
                 .setSmallIcon(R.drawable.ic_action_location)
@@ -109,6 +188,7 @@ public class GeofenceTrasitionService extends IntentService {
 
 
     private static String getErrorString(int errorCode) {
+        Log.d(TAG, "entered getErrorString");
         switch (errorCode) {
             case GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE:
                 return "GeoFence not available";

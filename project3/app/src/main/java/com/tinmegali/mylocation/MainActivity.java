@@ -2,8 +2,10 @@ package com.tinmegali.mylocation;
 
 import android.Manifest;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -58,11 +60,10 @@ public class MainActivity extends AppCompatActivity
     private Location lastLocation;
 
     private TextView textLat, textLong;
-    private TextView textLib, textLab;
+    public static TextView textLib, textLab;
 
     private MapFragment mapFragment;
-    private int fullerCount = 0;
-    private int gordonCount = 0;
+
     private static final String NOTIFICATION_MSG = "NOTIFICATION MSG";
     // Create a Intent send by the notification
 
@@ -74,10 +75,7 @@ public class MainActivity extends AppCompatActivity
         return intent;
     }
 
-    private void writeNumberOfVisits(int fullerVisits, int gordonVisits) {
-        textLab.setText( "Visits to Fuller labs geoFence: " + fullerVisits );
-        textLib.setText( "Visits to Library geoFence: "  + gordonVisits );
-    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +93,15 @@ public class MainActivity extends AppCompatActivity
         createGoogleApi();
     }
 
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "entered onReceive");
+            updateUI(intent);
+        }
+    };
+
+
     // Create GoogleApiClient instance
     private void createGoogleApi() {
         Log.d(TAG, "createGoogleApi()");
@@ -105,6 +112,19 @@ public class MainActivity extends AppCompatActivity
                     .addApi( LocationServices.API )
                     .build();
         }
+    }
+
+    private void updateUI(Intent intent) {
+        Log.d(TAG, "entered updateUI");
+        String lab_counter = intent.getStringExtra("lab_counter");
+        String lib_counter = intent.getStringExtra("lib_counter");
+        Log.d(TAG, lab_counter);
+        Log.d(TAG, lib_counter);
+
+        TextView textLib = (TextView) findViewById(R.id.lab);
+        TextView textLab = (TextView) findViewById(R.id.lib);
+        textLab.setText("Visits to Fuller labs geoFence:" + lab_counter);
+        textLib.setText("Visits to Library geoFence: " + lib_counter);
     }
 
     @Override
@@ -204,10 +224,8 @@ public class MainActivity extends AppCompatActivity
         Log.d(TAG, "onMapReady()");
         map = googleMap;
         //map.setOnMapClickListener(this);
-        LatLng fullerLabs = new LatLng(42.274978, -71.806632);
-        markerForGeofence(fullerLabs);
-        LatLng gordonLib = new LatLng(42.284978, -71.806632);
-        markersForGeofence(fullerLabs, gordonLib);
+
+
         //map.setOnMarkerClickListener(this);
     }
 
@@ -253,6 +271,13 @@ public class MainActivity extends AppCompatActivity
     public void onConnected(@Nullable Bundle bundle) {
         Log.i(TAG, "onConnected()");
         getLastKnownLocation();
+        startLocationUpdates();
+        LatLng fullerLabs = new LatLng(42.274978, -71.806632);
+        //markerForGeofence(fullerLabs);
+        LatLng gordonLib = new LatLng(42.284978, -71.806632);
+        markersForGeofence(fullerLabs, gordonLib);
+        startGeofence();
+        drawGeofence();
         //recoverGeofenceMarker();
     }
 
@@ -261,6 +286,7 @@ public class MainActivity extends AppCompatActivity
     public void onConnectionSuspended(int i) {
         Log.w(TAG, "onConnectionSuspended()");
     }
+
 
     // GoogleApiClient.OnConnectionFailedListener fail
     @Override
@@ -305,7 +331,7 @@ public class MainActivity extends AppCompatActivity
         Log.i(TAG, "markerLocation("+latLng+")");
         String title = latLng.latitude + ", " + latLng.longitude;
         MarkerOptions markerOptions = new MarkerOptions()
-                .position(latLng) 
+                .position(latLng)
                 .title(title);
         if ( map!=null ) {
             if ( locationMarker != null )
@@ -363,12 +389,12 @@ public class MainActivity extends AppCompatActivity
             if (geoFenceMarker1 != null)
                 geoFenceMarker1.remove();
 
-            geoFenceMarker1 = map.addMarker(markerOptions1);
+            geoFenceMarker1 = map.addMarker(markerOptions1);  //Fuller Labs
 
             if (geoFenceMarker2 != null)
                 geoFenceMarker2.remove();
 
-            geoFenceMarker2 = map.addMarker(markerOptions2);
+            geoFenceMarker2 = map.addMarker(markerOptions2); //Gordon Lib
         }
 
     }
@@ -376,17 +402,19 @@ public class MainActivity extends AppCompatActivity
 
     // Start Geofence creation process
     private void startGeofence() {
-        Log.i(TAG, "startGeofencenew()");
+        Log.i(TAG, "startGeofence()");
 
         //Geofence geofence2 = createGeofence( fullerLabs, GEOFENCE_RADIUS );
         //GeofencingRequest geofenceRequest2 = createGeofenceRequest( geofence2 );
         //addGeofence( geofenceRequest2 );
         if( geoFenceMarker1 != null ) {
-            Geofence geofence1 = createGeofence( geoFenceMarker1.getPosition(), GEOFENCE_RADIUS );
+            String geofence_req_id_1 = "Fuller Labs";
+            String geofence_req_id_2 = "Gordon Lib";
+            Geofence geofence1 = createGeofence( geoFenceMarker1.getPosition(), GEOFENCE_RADIUS, geofence_req_id_1 );
             GeofencingRequest geofenceRequest1 = createGeofenceRequest( geofence1 );
             addGeofence( geofenceRequest1 );
 
-            Geofence geofence2 = createGeofence( geoFenceMarker2.getPosition(), GEOFENCE_RADIUS );
+            Geofence geofence2 = createGeofence( geoFenceMarker2.getPosition(), GEOFENCE_RADIUS, geofence_req_id_2 );
             GeofencingRequest geofenceRequest2 = createGeofenceRequest( geofence2 );
             addGeofence( geofenceRequest2 );
             //fuller labs lat: 42.274978 , long: -71.806632
@@ -396,14 +424,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     private static final long GEO_DURATION = 60 * 60 * 1000;
-    private static final String GEOFENCE_REQ_ID = "My Geofence";
+
     private static final float GEOFENCE_RADIUS = 500.0f; // in meters
 
     // Create a Geofence
-    private Geofence createGeofence( LatLng latLng, float radius ) {
+    private Geofence createGeofence( LatLng latLng, float radius, String geofence_req_id ) {
         Log.d(TAG, "createGeofence" + latLng);
         return new Geofence.Builder()
-                .setRequestId(GEOFENCE_REQ_ID)
+                .setRequestId(geofence_req_id)
                 .setCircularRegion( latLng.latitude, latLng.longitude, radius)
                 .setExpirationDuration( GEO_DURATION )
                 .setTransitionTypes( Geofence.GEOFENCE_TRANSITION_ENTER
@@ -428,6 +456,8 @@ public class MainActivity extends AppCompatActivity
             return geoFencePendingIntent;
 
         Intent intent = new Intent( this, GeofenceTrasitionService.class);
+        startService(intent);
+        registerReceiver(broadcastReceiver, new IntentFilter(GeofenceTrasitionService.BROADCAST_ACTION));
         return PendingIntent.getService(
                 this, GEOFENCE_REQ_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT );
     }
@@ -447,7 +477,7 @@ public class MainActivity extends AppCompatActivity
     public void onResult(@NonNull Status status) {
         Log.i(TAG, "onResult: " + status);
         if ( status.isSuccess() ) {
-            saveGeofence();
+            //saveGeofence();
             drawGeofence();
         } else {
             // inform about fail
