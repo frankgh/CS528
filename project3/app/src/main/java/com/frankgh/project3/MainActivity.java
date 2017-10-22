@@ -56,40 +56,38 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         public void onReceive(Context context, Intent intent) {
             // Get extra data included in the Intent
             int currentActivityCode = intent.getIntExtra("currentActivityCode", DetectedActivity.UNKNOWN);
-
             Log.d(TAG, "Received: " + currentActivityCode + ", Current: " + previousActivityCode);
 
             if (currentActivityCode == previousActivityCode)
                 return;
 
+            int imageResourceId = -1;
+            int textResourceId = -1;
             switch (currentActivityCode) {
                 case DetectedActivity.STILL:
-                    mActivityImage.setImageResource(R.drawable.still);
-                    mActivityText.setText(R.string.activity_still);
-                    mActivityText.setVisibility(View.VISIBLE);
-                    mActivityImage.setVisibility(View.VISIBLE);
+                    imageResourceId = R.drawable.still;
+                    textResourceId = R.string.activity_still;
                     break;
                 case DetectedActivity.WALKING:
-                    mActivityImage.setImageResource(R.drawable.walking);
-                    mActivityText.setText(R.string.activity_walking);
-                    mActivityText.setVisibility(View.VISIBLE);
-                    mActivityImage.setVisibility(View.VISIBLE);
+                    imageResourceId = R.drawable.walking;
+                    textResourceId = R.string.activity_walking;
                     break;
                 case DetectedActivity.RUNNING:
-                    mActivityImage.setImageResource(R.drawable.running);
-                    mActivityText.setText(R.string.activity_running);
-                    mActivityText.setVisibility(View.VISIBLE);
-                    mActivityImage.setVisibility(View.VISIBLE);
+                    imageResourceId = R.drawable.running;
+                    textResourceId = R.string.activity_running;
                     break;
-                case DetectedActivity.UNKNOWN:
-                    mActivityText.setText("");
-                    mActivityText.setVisibility(View.GONE);
-                    mActivityImage.setVisibility(View.GONE);
-                    break;
+            }
+            if (imageResourceId != -1) {
+                mActivityText.setText(textResourceId);
+                mActivityText.setVisibility(View.VISIBLE);
+                mActivityImage.setImageResource(imageResourceId);
+                mActivityImage.setVisibility(View.VISIBLE);
+            } else {
+                mActivityText.setVisibility(View.GONE);
+                mActivityImage.setVisibility(View.GONE);
             }
             // Get data for the intent
             int toastTextId = -1;
-
             switch (previousActivityCode) {
                 case DetectedActivity.STILL:
                     toastTextId = R.string.activity_summary_still;
@@ -101,7 +99,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                     toastTextId = R.string.activity_summary_running;
                     break;
             }
-
             // Whenever a user switches to a new activity,
             // a toast pops up displaying how long the last activity lasted.
             // For instance, if the user was walking and became still,
@@ -123,6 +120,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        mActivityText.setVisibility(View.GONE);
+        mActivityImage.setVisibility(View.GONE);
 
         mMapView.onCreate(savedInstanceState);
         mMapView.getMapAsync(new OnMapReadyCallback() {
