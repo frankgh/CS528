@@ -109,7 +109,6 @@ public class GeofenceTrasitionService extends IntentService {
         String status = null;
         if ( geoFenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ) {
             status = "Entering ";
-            DisplayLoggingInfo(status + TextUtils.join( ", ", triggeringGeofencesList));
         }
         else if ( geoFenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT )
             status = "Exiting ";
@@ -137,7 +136,7 @@ public class GeofenceTrasitionService extends IntentService {
             List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
             String geofenceTransitionDetails = getGeofenceTrasitionDetails(geoFenceTransition, triggeringGeofences );
 
-
+            DisplayLoggingInfo(geofenceTransitionDetails);
             sendNotification( geofenceTransitionDetails );
         }
     }
