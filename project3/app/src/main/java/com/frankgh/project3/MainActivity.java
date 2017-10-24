@@ -199,14 +199,14 @@ LocationListener,
         sensorManager.registerListener(MainActivity.this, accel, SensorManager.SENSOR_DELAY_FASTEST);
 
 
-        initGMaps();
 
         // create GoogleApiClient
-        createGoogleApi();
+//        createGoogleApi();
 
 
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
+                .addApi( LocationServices.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
@@ -214,6 +214,8 @@ LocationListener,
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("ActivityRecognizedService#ActivityChange"));
         Log.d(TAG, "LocalBroadcastManager.registerReceiver:mMessageReceiver");
+        initGMaps();
+
     }
 
 
@@ -252,10 +254,10 @@ LocationListener,
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (mPendingIntent != null) {
-            Log.d(TAG, "ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates");
-            ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 0, mPendingIntent);
-        }
+//        if (mPendingIntent != null) {
+//            Log.d(TAG, "ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates");
+//            ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 0, mPendingIntent);
+//        }
     }
 
     @Override
@@ -413,7 +415,7 @@ LocationListener,
         if ( checkPermission() ) {
             lastLocation = LocationServices.FusedLocationApi.getLastLocation(mApiClient);
             if ( lastLocation != null ) {
-                Log.i(TAG, "LasKnown location. " +
+                Log.i(TAG, "LasKnown location." +
                         "Long: " + lastLocation.getLongitude() +
                         " | Lat: " + lastLocation.getLatitude());
                 writeLastLocation();
@@ -427,8 +429,9 @@ LocationListener,
     }
 
     private void writeActualLocation(Location location) {
-        textLat.setText( "Lat: " + location.getLatitude() );
-        textLong.setText( "Long: " + location.getLongitude() );
+
+//        textLat.setText( "Lat: " + location.getLatitude() );
+//        textLong.setText( "Long: " + location.getLongitude() );
 
         markerLocation(new LatLng(location.getLatitude(), location.getLongitude()));
     }
@@ -436,6 +439,7 @@ LocationListener,
 
 
     private void writeLastLocation() {
+        Log.i(TAG, "here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!. ");
         writeActualLocation(lastLocation);
     }
 
@@ -733,8 +737,8 @@ LocationListener,
 
         String lab_counter = "lab_counter";
         String lib_counter = "lib_counter";
-        Log.d(TAG, lab_counter);
-        Log.d(TAG, lib_counter);
+//        Log.d(TAG, lab_counter);
+//        Log.d(TAG, lib_counter);
 
 
         if (velocityEstimate > stepSensitivity && oldVelocityEstimate <= stepSensitivity
