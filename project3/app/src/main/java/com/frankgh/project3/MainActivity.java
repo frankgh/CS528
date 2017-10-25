@@ -1,13 +1,18 @@
 package com.frankgh.project3;
 
+import android.Manifest;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -18,21 +23,46 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.DetectedActivity;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class MainActivity extends AppCompatActivity
+        implements
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        LocationListener,
+        OnMapReadyCallback,
+        GoogleMap.OnMapClickListener,
+        GoogleMap.OnMarkerClickListener,
+        ResultCallback<Status> {
 
     private static final String TAG = "MainActivity";
+    /**
+     * Interval of 5 seconds
+     */
+    private static final int ACTIVITY_RECOGNITION_DETECTION_INTERVAL = 5000;
+    private static final float GEO_FENCE_RADIUS = 500.0f; // in meters
+    private static final int REQ_PERMISSION = 999;
+    private static final int UPDATE_INTERVAL = 1000;
+    private static final int FASTEST_INTERVAL = 900;
+
+    private static final LatLng FULLER_COORDS = new LatLng(42.275177, -71.805926);
+    private static final LatLng LIBRARY_COORDS = new LatLng(42.274228, -71.806353);
 
     @BindView(R.id.imageView)
     ImageView mActivityImage;
@@ -44,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     TextView mActivityText;
     @BindView(R.id.mapView)
     MapView mMapView;
+    private GoogleMap mMap;
     private int previousActivityCode = DetectedActivity.UNKNOWN;
     private long previousActivityStart = System.currentTimeMillis();
     private PendingIntent mPendingIntent;
@@ -125,32 +156,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         mActivityImage.setVisibility(View.GONE);
 
         mMapView.onCreate(savedInstanceState);
-        mMapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap googleMap) {
-                LatLng sydney = new LatLng(-33.867, 151.206);
-
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-//                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    ActivityCompat#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for ActivityCompat#requestPermissions for more details.
-//            return;
-//        }
-//        map.setMyLocationEnabled(true);
-                // Add a marker in Sydney and move the camera
-                googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-                googleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
-                mMapView.onResume();
-            }
-        });
+        mMapView.getMapAsync(this);
 
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
+                .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
@@ -162,28 +172,19 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Intent intent = new Intent(this, ActivityRecognizedService.class);
-        mPendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        Log.d(TAG, "ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates");
-        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 0, mPendingIntent);
+        startActivityRecognitionService();
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        if (mPendingIntent != null) {
-            Log.d(TAG, "ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates");
-            ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 0, mPendingIntent);
-        }
+        resumeActivityRecognitionService();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        if (mPendingIntent != null) {
-            Log.d(TAG, "ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates");
-            ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mPendingIntent);
-        }
+        stopActivityRecognitionService();
     }
 
     @Override
@@ -200,5 +201,96 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+    }
+
+    @Override
+    public void onResult(@NonNull Status status) {
+        Log.i(TAG, "onResult: " + status);
+        if (status.isSuccess()) {
+            drawGeoFence();
+        }
+    }
+
+    private void startActivityRecognitionService() {
+        Intent intent = new Intent(this, ActivityRecognizedService.class);
+        mPendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        Log.d(TAG, "ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates");
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, ACTIVITY_RECOGNITION_DETECTION_INTERVAL, mPendingIntent);
+    }
+
+    private void resumeActivityRecognitionService() {
+        if (mPendingIntent != null) {
+            Log.d(TAG, "ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates");
+            ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, ACTIVITY_RECOGNITION_DETECTION_INTERVAL, mPendingIntent);
+        }
+    }
+
+    private void stopActivityRecognitionService() {
+        if (mPendingIntent != null) {
+            Log.d(TAG, "ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates");
+            ActivityRecognition.ActivityRecognitionApi.removeActivityUpdates(mApiClient, mPendingIntent);
+        }
+    }
+
+    private void drawGeoFence() {
+        Log.d(TAG, "drawGeoFence()");
+
+        if (geoFenceLimits1 != null)
+            geoFenceLimits1.remove();
+
+        if (geoFenceLimits2 != null)
+            geoFenceLimits2.remove();
+
+        CircleOptions circleOptions1 = new CircleOptions()
+                .center(geoFenceMarker1.getPosition())
+                .strokeColor(Color.argb(50, 70, 70, 70))
+                .fillColor(Color.argb(100, 150, 150, 150))
+                .radius(GEO_FENCE_RADIUS);
+        geoFenceLimits1 = map.addCircle(circleOptions1);
+
+        CircleOptions circleOptions2 = new CircleOptions()
+                .center(geoFenceMarker2.getPosition())
+                .strokeColor(Color.argb(50, 70, 70, 70))
+                .fillColor(Color.argb(100, 150, 150, 150))
+                .radius(GEO_FENCE_RADIUS);
+        geoFenceLimits2 = mMap.addCircle(circleOptions2);
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+
+    }
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        return false;
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQ_PERMISSION
+            );
+
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+        // Add a marker in Sydney and move the camera
+        mMap.addMarker(new MarkerOptions().position(FULLER_COORDS).title("Marker in Fuller"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(FULLER_COORDS));
+        mMapView.onResume();
     }
 }
