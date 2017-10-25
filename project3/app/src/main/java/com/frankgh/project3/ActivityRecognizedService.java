@@ -18,16 +18,13 @@ import java.util.Set;
 
 public class ActivityRecognizedService extends IntentService {
 
+    public static final String BROADCAST_ACTION = "ActivityRecognizedService#ActivityChange";
     private static final String TAG = "ActivityRecognition";
     private static final String[] CODE_TEXT = {"IN_VEHICLE", "ON_BICYCLE", "ON_FOOT",
             "STILL", "UNKNOWN", "TILTING", "", "WALKING", "RUNNING"};
 
     public ActivityRecognizedService() {
         super("ActivityRecognizedService");
-    }
-
-    public ActivityRecognizedService(String name) {
-        super(name);
     }
 
     @Override
@@ -66,7 +63,7 @@ public class ActivityRecognizedService extends IntentService {
             case DetectedActivity.RUNNING:
             case DetectedActivity.WALKING: {
                 Log.d(TAG, typeToText(activity.getType()) + "(" + activity.getType() + "): " + activity.getConfidence());
-                Intent intent = new Intent("ActivityRecognizedService#ActivityChange");
+                Intent intent = new Intent(BROADCAST_ACTION);
                 intent.putExtra("currentActivityCode", activity.getType());
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
                 break;
