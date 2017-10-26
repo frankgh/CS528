@@ -65,6 +65,7 @@ public class GeofenceTrasitionService extends IntentService{
         count_intent.putExtra("lib_counter", String.valueOf(lib_counter));
         count_intent.putExtra("lab_counter", String.valueOf(lab_counter));
         count_intent.putExtra("place", place);
+        count_intent.putExtra("dets", dets);
         sendBroadcast(count_intent);
     }
 

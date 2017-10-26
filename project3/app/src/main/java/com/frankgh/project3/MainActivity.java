@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private static final String NOTIFICATION_MSG = "NOTIFICATION MSG";
     private static final long GEO_DURATION = 60 * 60 * 1000;
     private static final float GEOFENCE_RADIUS = 50.0f; // in meters
-    private static final float stepSensitivity = 30f;
+    private static final float stepSensitivity = 20f;
     private static final int stepTime = 200000000;
     public static TextView textLib, textLab;
     private final int REQ_PERMISSION = 999;
@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         @Override
         public void onReceive(Context context, Intent intent) {
             // Get extra data included in the Intent
-            if (intent.getStringExtra("lab_counter") == null) {
+//            if (intent.getStringExtra("dets") == null) {
                 int currentActivityCode = intent.getIntExtra("currentActivityCode", DetectedActivity.UNKNOWN);
                 Log.d(TAG, "Received: " + currentActivityCode + ", Current: " + previousActivityCode);
 
@@ -166,12 +166,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
                 previousActivityCode = currentActivityCode;
                 previousActivityStart = System.currentTimeMillis();
-            } else {
-                Toast.makeText(context, "just entered ", Toast.LENGTH_LONG).show();
+            if (intent.getStringExtra("dets") != null){
+                Toast.makeText(context, intent.getStringExtra("dets"), Toast.LENGTH_LONG).show();
 //                if (Integer.valueOf(intent.getStringExtra("place")) == 1){
 //                    currPlace = 1;}
+                currPlace = intent.getStringExtra("place");
                 onEnter = true;
-
             }
         }
     };
@@ -187,10 +187,10 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private float[] accelX = new float[50];
     private float[] accelY = new float[50];
     private float[] accelZ = new float[50];
-    private int velRingCounter = 0;
-    private float[] velRing = new float[5];
+    private int velocityCount = 0;
+    private float[] velocityArr = new float[5];
     private long previousStep = 0;
-    private float oldVelocityEstimate = 0;
+    private float previousVel = 0;
 
     public static Intent makeNotificationIntent(Context context, String msg) {
 
@@ -683,8 +683,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             geoFenceLimits2.remove();
     }
 
-    public void calcSteps(long time, float x, float y, float z) {
+    public void calcSteps(float x, float y, float z, long time) {
         float[] currentAccel = new float[3];
+        float[] movement = new float[3];
+        float normized = norm(movement);
+
+
         currentAccel[0] = x;
         currentAccel[1] = y;
         currentAccel[2] = z;
@@ -694,54 +698,53 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         accelY[accelCounter % 50] = currentAccel[1];
         accelZ[accelCounter % 50] = currentAccel[2];
 
-        float[] movement = new float[3];
         movement[0] = sum(accelX) / Math.min(accelCounter, 50);
         movement[1] = sum(accelY) / Math.min(accelCounter, 50);
         movement[2] = sum(accelZ) / Math.min(accelCounter, 50);
-
-        float normized = norm(movement);
 
         movement[0] = movement[0] / normized;
         movement[1] = movement[1] / normized;
         movement[2] = movement[2] / normized;
 
         float currentZ = dot(movement, currentAccel) - normized;
-        velRingCounter++;
-        velRing[velRingCounter % 5] = currentZ;
+        velocityCount++;
+        velocityArr[velocityCount % 5] = currentZ;
 
-        float velocityEstimate = sum(velRing);
+        float velocityEstimate = sum(velocityArr);
 
-        if (velocityEstimate > stepSensitivity &&
-                oldVelocityEstimate <= stepSensitivity &&
+        if (velocityEstimate > 20f &&
+                previousVel <= 20f &&
                 (time - previousStep > stepTime) &&
                 onEnter == true) {
             steps += 1;
             if (steps > 5) {
                 TextView textLib = (TextView) findViewById(R.id.libraryGeoFenceText);
                 TextView textLab = (TextView) findViewById(R.id.fullerLabsGeoFenceText);
-                textLab.setText(Integer.toString(2));
+//                textLab.setText(Integer.toString(2));
                 if (currPlace.equals("Fuller")) {
                     fullerVisits += 1;
                     textLab.setText(Integer.toString(fullerVisits));
+                    Toast.makeText(this,"Heelooo" , Toast.LENGTH_SHORT).show();
                 } else if (currPlace.equals("Gordon")) {
                     gordonVisits += 1;
                     textLib.setText(Integer.toString(gordonVisits));
+
                 }
                 onEnter = false;
             }
             previousStep = time;
         }
-        oldVelocityEstimate = velocityEstimate;
+        previousVel = velocityEstimate;
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             calcSteps(
-                    event.timestamp,
                     event.values[0],
                     event.values[1],
-                    event.values[2]);
+                    event.values[2],
+                    event.timestamp);
         }
     }
 
