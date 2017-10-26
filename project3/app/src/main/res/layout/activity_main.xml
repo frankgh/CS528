@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/fuller_labs_label"
-        android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/fullerLabsGeoFenceText"
         app:layout_constraintTop_toTopOf="parent" />
@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/library_label"
-        android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
         app:layout_constraintLeft_toLeftOf="@+id/fullerLabsLabel"
         app:layout_constraintTop_toBottomOf="@+id/fullerLabsLabel" />
 
@@ -33,7 +33,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/geofence_text_placeholder"
-        android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
         app:layout_constraintLeft_toRightOf="@+id/fullerLabsLabel"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -44,7 +44,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="@string/geofence_text_placeholder"
-        android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
         app:layout_constraintLeft_toLeftOf="@+id/fullerLabsGeoFenceText"
         app:layout_constraintTop_toBottomOf="@+id/fullerLabsGeoFenceText" />
 
@@ -66,7 +66,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:text="abcdefg"
-        android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+        android:textAppearance="@style/Base.TextAppearance.AppCompat.Medium"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_bias="0.501"
