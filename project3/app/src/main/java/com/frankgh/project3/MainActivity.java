@@ -723,7 +723,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 if (currPlace.equals("Fuller")) {
                     fullerVisits += 1;
                     textLab.setText(Integer.toString(fullerVisits));
-                } else if (currPlace.equals("Fuller")) {
+                } else if (currPlace.equals("Gordon")) {
                     gordonVisits += 1;
                     textLib.setText(Integer.toString(gordonVisits));
                 }
