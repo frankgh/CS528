@@ -32,16 +32,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.ActivityRecognition;
-import com.google.android.gms.location.DetectedActivity;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.ActivityRecognition;
@@ -67,14 +57,31 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener,
-LocationListener,
+        LocationListener,
         OnMapReadyCallback,
         GoogleMap.OnMapClickListener,
         GoogleMap.OnMarkerClickListener,
         ResultCallback<Status>, SensorEventListener {
 
     private static final String TAG = "MainActivity";
-
+    private static final String NOTIFICATION_MSG = "NOTIFICATION MSG";
+    private static final long GEO_DURATION = 60 * 60 * 1000;
+    private static final float GEOFENCE_RADIUS = 500.0f; // in meters
+    private static final float stepSensitivity = 30f;
+    private static final int stepTime = 200000000;
+    public static TextView textLib, textLab;
+    private final int REQ_PERMISSION = 999;
+    private final int UPDATE_INTERVAL = 1000;
+    private final int FASTEST_INTERVAL = 900;
+    private final int GEOFENCE_REQ_CODE = 0;
+    private final String KEY_GEOFENCE_LAT = "GEOFENCE LATITUDE";
+    private final String KEY_GEOFENCE_LON = "GEOFENCE LONGITUDE";
+    public boolean onEnter = false;
+    // Create a Intent send by the notification
+    public int steps = 0;
+    public int fullerVisits = 0;
+    public int gordonVisits = 0;
+    public String currPlace = "Fuller";
     @BindView(R.id.imageView)
     ImageView mActivityImage;
     @BindView(R.id.fullerLabsGeoFenceText)
@@ -83,40 +90,17 @@ LocationListener,
     TextView mLibraryGeoFenceText;
     @BindView(R.id.activityText)
     TextView mActivityText;
-
     private int previousActivityCode = DetectedActivity.UNKNOWN;
     private long previousActivityStart = System.currentTimeMillis();
     private PendingIntent mPendingIntent;
     private GoogleApiClient mApiClient;
-
-
-
-
     private GoogleMap map;
     private GoogleApiClient googleApiClient;
     private Location lastLocation;
-
     private TextView textLat, textLong;
-    public static TextView textLib, textLab;
-    public boolean onEnter = false;
     private MapFragment mapFragment;
-
-    private static final String NOTIFICATION_MSG = "NOTIFICATION MSG";
-    // Create a Intent send by the notification
-    public int steps = 0;
-    public int fullerVisits = 0;
-    public int gordonVisits = 0;
-    public String currPlace = "Fuller";
     private SensorManager sensorManager;
     private Sensor accel;
-
-    public static Intent makeNotificationIntent(Context context, String msg) {
-
-        Intent intent = new Intent( context, MainActivity.class );
-        intent.putExtra( NOTIFICATION_MSG, msg );
-        return intent;
-    }
-
     // Our handler for received Intents. This will be called whenever an Intent
     // with an action named "custom-event-name" is broadcasted.
     private BroadcastReceiver mMessageReceiver = new BroadcastReceiver() {
@@ -124,7 +108,7 @@ LocationListener,
         @Override
         public void onReceive(Context context, Intent intent) {
             // Get extra data included in the Intent
-            if (intent.getStringExtra("lab_counter") == null){
+            if (intent.getStringExtra("lab_counter") == null) {
                 int currentActivityCode = intent.getIntExtra("currentActivityCode", DetectedActivity.UNKNOWN);
                 Log.d(TAG, "Received: " + currentActivityCode + ", Current: " + previousActivityCode);
 
@@ -182,9 +166,8 @@ LocationListener,
 
                 previousActivityCode = currentActivityCode;
                 previousActivityStart = System.currentTimeMillis();
-            }
-        else {
-                Toast.makeText(context, "just entered " , Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(context, "just entered ", Toast.LENGTH_LONG).show();
 //                if (Integer.valueOf(intent.getStringExtra("place")) == 1){
 //                    currPlace = 1;}
                 onEnter = true;
@@ -192,6 +175,52 @@ LocationListener,
             }
         }
     };
+    private LocationRequest locationRequest;
+    private Marker locationMarker;
+    private Marker geoFenceMarker1;
+    private Marker geoFenceMarker2;
+    private PendingIntent geoFencePendingIntent;
+    // Draw Geofence circle on GoogleMap
+    private Circle geoFenceLimits1;
+    private Circle geoFenceLimits2;
+    private int accelCounter = 0;
+    private float[] accelX = new float[50];
+    private float[] accelY = new float[50];
+    private float[] accelZ = new float[50];
+    private int velRingCounter = 0;
+    private float[] velRing = new float[5];
+    private long previousStep = 0;
+    private float oldVelocityEstimate = 0;
+
+    public static Intent makeNotificationIntent(Context context, String msg) {
+
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.putExtra(NOTIFICATION_MSG, msg);
+        return intent;
+    }
+
+    public static float norm(float[] array) {
+        float normed = 0;
+        for (int i = 0; i < array.length; i++) {
+            normed = normed + array[i] * array[i];
+        }
+        return (float) Math.sqrt(normed);
+    }
+
+    public static float dot(float[] a, float[] b) {
+        float dotted = a[0] * b[0]
+                + a[1] * b[1]
+                + a[2] * b[2];
+        return dotted;
+    }
+
+    public static float sum(float[] array) {
+        float summed = 0;
+        for (int i = 0; i < array.length; i++) {
+            summed = summed + array[i];
+        }
+        return summed;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -208,14 +237,13 @@ LocationListener,
         sensorManager.registerListener(MainActivity.this, accel, SensorManager.SENSOR_DELAY_FASTEST);
 
 
-
         // create GoogleApiClient
 //        createGoogleApi();
 
 
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(ActivityRecognition.API)
-                .addApi( LocationServices.API)
+                .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
@@ -227,19 +255,19 @@ LocationListener,
 
     }
 
-
-    private void initGMaps(){
+    private void initGMaps() {
         mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
     }
+
     // Create GoogleApiClient instance
     private void createGoogleApi() {
         Log.d(TAG, "createGoogleApi()");
-        if ( mApiClient == null ) {
-            mApiClient = new GoogleApiClient.Builder( this )
-                    .addConnectionCallbacks( this )
-                    .addOnConnectionFailedListener( this )
-                    .addApi( LocationServices.API )
+        if (mApiClient == null) {
+            mApiClient = new GoogleApiClient.Builder(this)
+                    .addConnectionCallbacks(this)
+                    .addOnConnectionFailedListener(this)
+                    .addApi(LocationServices.API)
                     .build();
         }
     }
@@ -295,7 +323,6 @@ LocationListener,
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
     }
 
-
     @Override
     protected void onStart() {
         super.onStart();
@@ -307,13 +334,13 @@ LocationListener,
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate( R.menu.main_menu, menu );
+        inflater.inflate(R.menu.main_menu, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch ( item.getItemId() ) {
+        switch (item.getItemId()) {
             case R.id.geofence: {
                 startGeofence();
                 return true;
@@ -326,14 +353,12 @@ LocationListener,
         return super.onOptionsItemSelected(item);
     }
 
-    private final int REQ_PERMISSION = 999;
-
     // Check for permission to access Location
     private boolean checkPermission() {
         Log.d(TAG, "checkPermission()");
         // Ask for permission if it wasn't granted yet
         return (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED );
+                == PackageManager.PERMISSION_GRANTED);
     }
 
     // Asks for permission
@@ -341,7 +366,7 @@ LocationListener,
         Log.d(TAG, "askPermission()");
         ActivityCompat.requestPermissions(
                 this,
-                new String[] { Manifest.permission.ACCESS_FINE_LOCATION },
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                 REQ_PERMISSION
         );
     }
@@ -351,10 +376,10 @@ LocationListener,
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.d(TAG, "onRequestPermissionsResult()");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch ( requestCode ) {
+        switch (requestCode) {
             case REQ_PERMISSION: {
-                if ( grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED ){
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permission granted
                     getLastKnownLocation();
 
@@ -373,7 +398,6 @@ LocationListener,
         // TODO close app and warn user
     }
 
-
     // Callback called when Map is ready
     @Override
     public void onMapReady(GoogleMap googleMap) {
@@ -387,43 +411,39 @@ LocationListener,
 
     @Override
     public void onMapClick(LatLng latLng) {
-        Log.d(TAG, "onMapClick("+latLng +")");
+        Log.d(TAG, "onMapClick(" + latLng + ")");
         markerForGeofence(latLng);
     }
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        Log.d(TAG, "onMarkerClickListener: " + marker.getPosition() );
+        Log.d(TAG, "onMarkerClickListener: " + marker.getPosition());
         return false;
     }
 
-    private LocationRequest locationRequest;
-    private final int UPDATE_INTERVAL =  1000;
-    private final int FASTEST_INTERVAL = 900;
-
-    private void startLocationUpdates(){
+    private void startLocationUpdates() {
         Log.i(TAG, "startLocationUpdates()");
         locationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(UPDATE_INTERVAL)
                 .setFastestInterval(FASTEST_INTERVAL);
 
-        if ( checkPermission() )
+        if (checkPermission())
             LocationServices.FusedLocationApi.requestLocationUpdates(mApiClient, locationRequest, this);
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.d(TAG, "onLocationChanged ["+location+"]");
+        Log.d(TAG, "onLocationChanged [" + location + "]");
         lastLocation = location;
         writeActualLocation(location);
     }
 
     private void getLastKnownLocation() {
         Log.d(TAG, "getLastKnownLocation()");
-        if ( checkPermission() ) {
+        if (checkPermission()) {
             lastLocation = LocationServices.FusedLocationApi.getLastLocation(mApiClient);
-            if ( lastLocation != null ) {
+            if (lastLocation != null) {
                 Log.i(TAG, "LasKnown location." +
                         "Long: " + lastLocation.getLongitude() +
                         " | Lat: " + lastLocation.getLatitude());
@@ -433,8 +453,7 @@ LocationListener,
                 Log.w(TAG, "No location retrieved yet");
                 startLocationUpdates();
             }
-        }
-        else askPermission();
+        } else askPermission();
     }
 
     private void writeActualLocation(Location location) {
@@ -442,21 +461,18 @@ LocationListener,
         markerLocation(new LatLng(location.getLatitude(), location.getLongitude()));
     }
 
-
-
     private void writeLastLocation() {
         writeActualLocation(lastLocation);
     }
 
-    private Marker locationMarker;
     private void markerLocation(LatLng latLng) {
-        Log.i(TAG, "markerLocation("+latLng+")");
+        Log.i(TAG, "markerLocation(" + latLng + ")");
         String title = latLng.latitude + ", " + latLng.longitude;
         MarkerOptions markerOptions = new MarkerOptions()
                 .position(latLng)
                 .title(title);
-        if ( map!=null ) {
-            if ( locationMarker != null )
+        if (map != null) {
+            if (locationMarker != null)
                 locationMarker.remove();
             locationMarker = map.addMarker(markerOptions);
             float zoom = 14f;
@@ -465,19 +481,15 @@ LocationListener,
         }
     }
 
-
-    private Marker geoFenceMarker1;
-    private Marker geoFenceMarker2;
-
     private void markerForGeofence(LatLng latLng) {
-        Log.i(TAG, "markerForGeofence("+latLng+")");
+        Log.i(TAG, "markerForGeofence(" + latLng + ")");
         String title = latLng.latitude + ", " + latLng.longitude;
         // Define marker options
         MarkerOptions markerOptions = new MarkerOptions()
                 .position(latLng)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
                 .title(title);
-        if ( map!=null ) {
+        if (map != null) {
             // Remove last geoFenceMarker
             if (geoFenceMarker1 != null)
                 geoFenceMarker1.remove();
@@ -493,7 +505,7 @@ LocationListener,
     }
 
     private void markersForGeofence(LatLng latLng1, LatLng latLng2) {
-        Log.i(TAG, "markerForGeofence("+latLng1+latLng2+")");
+        Log.i(TAG, "markerForGeofence(" + latLng1 + latLng2 + ")");
         String title1 = latLng1.latitude + ", " + latLng1.longitude;
         // Define marker options
         MarkerOptions markerOptions1 = new MarkerOptions()
@@ -506,7 +518,7 @@ LocationListener,
                 .position(latLng2)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
                 .title(title2);
-        if ( map!=null ) {
+        if (map != null) {
             // Remove last geoFenceMarker
             if (geoFenceMarker1 != null)
                 geoFenceMarker1.remove();
@@ -521,7 +533,6 @@ LocationListener,
 
     }
 
-
     // Start Geofence creation process
     private void startGeofence() {
         Log.i(TAG, "startGeofence()");
@@ -529,59 +540,53 @@ LocationListener,
         //Geofence geofence2 = createGeofence( fullerLabs, GEOFENCE_RADIUS );
         //GeofencingRequest geofenceRequest2 = createGeofenceRequest( geofence2 );
         //addGeofence( geofenceRequest2 );
-        if( geoFenceMarker1 != null ) {
+        if (geoFenceMarker1 != null) {
             String geofence_req_id_1 = "Fuller Labs";
             String geofence_req_id_2 = "Gordon Lib";
-            Geofence geofence1 = createGeofence( geoFenceMarker1.getPosition(), GEOFENCE_RADIUS, geofence_req_id_1 );
-            GeofencingRequest geofenceRequest1 = createGeofenceRequest( geofence1 );
-            addGeofence( geofenceRequest1 );
+            Geofence geofence1 = createGeofence(geoFenceMarker1.getPosition(), GEOFENCE_RADIUS, geofence_req_id_1);
+            GeofencingRequest geofenceRequest1 = createGeofenceRequest(geofence1);
+            addGeofence(geofenceRequest1);
 
-            Geofence geofence2 = createGeofence( geoFenceMarker2.getPosition(), GEOFENCE_RADIUS, geofence_req_id_2 );
-            GeofencingRequest geofenceRequest2 = createGeofenceRequest( geofence2 );
-            addGeofence( geofenceRequest2 );
+            Geofence geofence2 = createGeofence(geoFenceMarker2.getPosition(), GEOFENCE_RADIUS, geofence_req_id_2);
+            GeofencingRequest geofenceRequest2 = createGeofenceRequest(geofence2);
+            addGeofence(geofenceRequest2);
             //fuller labs lat: 42.274978 , long: -71.806632
         } else {
             Log.e(TAG, "Geofence marker is null");
         }
     }
 
-    private static final long GEO_DURATION = 60 * 60 * 1000;
-
-    private static final float GEOFENCE_RADIUS = 500.0f; // in meters
-
     // Create a Geofence
-    private Geofence createGeofence( LatLng latLng, float radius, String geofence_req_id ) {
+    private Geofence createGeofence(LatLng latLng, float radius, String geofence_req_id) {
         Log.d(TAG, "createGeofence" + latLng);
         return new Geofence.Builder()
                 .setRequestId(geofence_req_id)
-                .setCircularRegion( latLng.latitude, latLng.longitude, radius)
-                .setExpirationDuration( GEO_DURATION )
-                .setTransitionTypes( Geofence.GEOFENCE_TRANSITION_ENTER
-                        | Geofence.GEOFENCE_TRANSITION_EXIT )
+                .setCircularRegion(latLng.latitude, latLng.longitude, radius)
+                .setExpirationDuration(GEO_DURATION)
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER
+                        | Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build();
     }
 
     // Create a Geofence Request
-    private GeofencingRequest createGeofenceRequest( Geofence geofence ) {
+    private GeofencingRequest createGeofenceRequest(Geofence geofence) {
         Log.d(TAG, "createGeofenceRequest");
         return new GeofencingRequest.Builder()
-                .setInitialTrigger( GeofencingRequest.INITIAL_TRIGGER_ENTER )
-                .addGeofence( geofence )
+                .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
+                .addGeofence(geofence)
                 .build();
     }
 
-    private PendingIntent geoFencePendingIntent;
-    private final int GEOFENCE_REQ_CODE = 0;
     private PendingIntent createGeofencePendingIntent() {
         Log.d(TAG, "createGeofencePendingIntent");
-        if ( geoFencePendingIntent != null )
+        if (geoFencePendingIntent != null)
             return geoFencePendingIntent;
 
-        Intent intent = new Intent( this, GeofenceTrasitionService.class);
+        Intent intent = new Intent(this, GeofenceTrasitionService.class);
         startService(intent);
         registerReceiver(mMessageReceiver, new IntentFilter(GeofenceTrasitionService.BROADCAST_ACTION));
         return PendingIntent.getService(
-                this, GEOFENCE_REQ_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT );
+                this, GEOFENCE_REQ_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     // Add the created GeofenceRequest to the device's monitoring list
@@ -598,7 +603,7 @@ LocationListener,
     @Override
     public void onResult(@NonNull Status status) {
         Log.i(TAG, "onResult: " + status);
-        if ( status.isSuccess() ) {
+        if (status.isSuccess()) {
             //saveGeofence();
             drawGeofence();
         } else {
@@ -606,48 +611,43 @@ LocationListener,
         }
     }
 
-    // Draw Geofence circle on GoogleMap
-    private Circle geoFenceLimits1;
-    private Circle geoFenceLimits2;
     private void drawGeofence() {
         Log.d(TAG, "drawGeofence()");
 
-        if ( geoFenceLimits1 != null )
+        if (geoFenceLimits1 != null)
             geoFenceLimits1.remove();
 
-        if ( geoFenceLimits2 != null )
+        if (geoFenceLimits2 != null)
             geoFenceLimits2.remove();
 
         CircleOptions circleOptions1 = new CircleOptions()
-                .center( geoFenceMarker1.getPosition())
-                .strokeColor(Color.argb(50, 70,70,70))
-                .fillColor( Color.argb(100, 150,150,150) )
-                .radius( GEOFENCE_RADIUS );
-        geoFenceLimits1 = map.addCircle( circleOptions1 );
+                .center(geoFenceMarker1.getPosition())
+                .strokeColor(Color.argb(50, 70, 70, 70))
+                .fillColor(Color.argb(100, 150, 150, 150))
+                .radius(GEOFENCE_RADIUS);
+        geoFenceLimits1 = map.addCircle(circleOptions1);
 
         CircleOptions circleOptions2 = new CircleOptions()
-                .center( geoFenceMarker2.getPosition())
-                .strokeColor(Color.argb(50, 70,70,70))
-                .fillColor( Color.argb(100, 150,150,150) )
-                .radius( GEOFENCE_RADIUS );
-        geoFenceLimits2 = map.addCircle( circleOptions2 );
+                .center(geoFenceMarker2.getPosition())
+                .strokeColor(Color.argb(50, 70, 70, 70))
+                .fillColor(Color.argb(100, 150, 150, 150))
+                .radius(GEOFENCE_RADIUS);
+        geoFenceLimits2 = map.addCircle(circleOptions2);
     }
-
-    private final String KEY_GEOFENCE_LAT = "GEOFENCE LATITUDE";
-    private final String KEY_GEOFENCE_LON = "GEOFENCE LONGITUDE";
 
     // Saving GeoFence marker with prefs mng
     private void saveGeofence() {
         Log.d(TAG, "saveGeofence()");
-        SharedPreferences sharedPref = getPreferences( Context.MODE_PRIVATE );
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
 
-        editor.putLong( KEY_GEOFENCE_LAT, Double.doubleToRawLongBits( geoFenceMarker1.getPosition().latitude ));
-        editor.putLong( KEY_GEOFENCE_LON, Double.doubleToRawLongBits( geoFenceMarker1.getPosition().longitude ));
-        editor.putLong( KEY_GEOFENCE_LAT, Double.doubleToRawLongBits( geoFenceMarker2.getPosition().latitude ));
-        editor.putLong( KEY_GEOFENCE_LON, Double.doubleToRawLongBits( geoFenceMarker2.getPosition().longitude ));
+        editor.putLong(KEY_GEOFENCE_LAT, Double.doubleToRawLongBits(geoFenceMarker1.getPosition().latitude));
+        editor.putLong(KEY_GEOFENCE_LON, Double.doubleToRawLongBits(geoFenceMarker1.getPosition().longitude));
+        editor.putLong(KEY_GEOFENCE_LAT, Double.doubleToRawLongBits(geoFenceMarker2.getPosition().latitude));
+        editor.putLong(KEY_GEOFENCE_LON, Double.doubleToRawLongBits(geoFenceMarker2.getPosition().longitude));
         editor.apply();
     }
+
     private void clearGeofence() {
         Log.d(TAG, "clearGeofence()");
         LocationServices.GeofencingApi.removeGeofences(
@@ -656,7 +656,7 @@ LocationListener,
         ).setResultCallback(new ResultCallback<Status>() {
             @Override
             public void onResult(@NonNull Status status) {
-                if ( status.isSuccess() ) {
+                if (status.isSuccess()) {
                     // remove drawing
                     removeGeofenceDraw();
                 }
@@ -666,50 +666,15 @@ LocationListener,
 
     private void removeGeofenceDraw() {
         Log.d(TAG, "removeGeofenceDraw()");
-        if ( geoFenceMarker1 != null)
+        if (geoFenceMarker1 != null)
             geoFenceMarker1.remove();
-        if ( geoFenceMarker2 != null)
+        if (geoFenceMarker2 != null)
             geoFenceMarker2.remove();
-        if ( geoFenceLimits1 != null )
+        if (geoFenceLimits1 != null)
             geoFenceLimits1.remove();
-        if ( geoFenceLimits2 != null )
+        if (geoFenceLimits2 != null)
             geoFenceLimits2.remove();
     }
-
-    public static float norm(float[] array) {
-        float normed = 0;
-        for (int i = 0; i < array.length; i++) {
-            normed = normed + array[i] * array[i];
-        }
-        return (float) Math.sqrt(normed);
-    }
-
-    public static float dot(float[] a, float[] b) {
-        float dotted = a[0] * b[0]
-                     + a[1] * b[1]
-                     + a[2] * b[2];
-        return dotted;
-    }
-
-    public static float sum(float[] array) {
-        float summed = 0;
-        for (int i = 0; i < array.length; i++) {
-            summed = summed + array[i];
-        }
-        return summed;
-    }
-    private static final float stepSensitivity = 30f;
-
-    private static final int stepTime = 200000000;
-
-    private int accelCounter = 0;
-    private float[] accelX = new float[50];
-    private float[] accelY = new float[50];
-    private float[] accelZ = new float[50];
-    private int velRingCounter = 0;
-    private float[] velRing = new float[5];
-    private long previousStep = 0;
-    private float oldVelocityEstimate = 0;
 
     public void calcSteps(long time, float x, float y, float z) {
         float[] currentAccel = new float[3];
@@ -740,19 +705,18 @@ LocationListener,
         float velocityEstimate = sum(velRing);
 
         if (velocityEstimate > stepSensitivity &&
-            oldVelocityEstimate <= stepSensitivity &&
-            (time - previousStep > stepTime) &&
-            onEnter == true) {
+                oldVelocityEstimate <= stepSensitivity &&
+                (time - previousStep > stepTime) &&
+                onEnter == true) {
             steps += 1;
-           if (steps > 5) {
+            if (steps > 5) {
                 TextView textLib = (TextView) findViewById(R.id.libraryGeoFenceText);
                 TextView textLab = (TextView) findViewById(R.id.fullerLabsGeoFenceText);
-               textLab.setText(Integer.toString(2));
-                if (currPlace.equals("Fuller")){
+                textLab.setText(Integer.toString(2));
+                if (currPlace.equals("Fuller")) {
                     fullerVisits += 1;
                     textLab.setText(Integer.toString(fullerVisits));
-                }
-                else if (currPlace.equals("Fuller")){
+                } else if (currPlace.equals("Fuller")) {
                     gordonVisits += 1;
                     textLib.setText(Integer.toString(gordonVisits));
                 }
@@ -762,6 +726,7 @@ LocationListener,
         }
         oldVelocityEstimate = velocityEstimate;
     }
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
