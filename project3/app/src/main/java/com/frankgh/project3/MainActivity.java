@@ -98,19 +98,21 @@ LocationListener,
 
     private TextView textLat, textLong;
     public static TextView textLib, textLab;
-
+    public boolean onEnter = false;
     private MapFragment mapFragment;
 
     private static final String NOTIFICATION_MSG = "NOTIFICATION MSG";
     // Create a Intent send by the notification
-    int steps = 0;
-    boolean entered = false;
+    public int steps = 0;
+    public int fullerVisits = 0;
+    public int gordonVisits = 0;
+    public String currPlace = "Fuller";
     private SensorManager sensorManager;
     private Sensor accel;
 
     public static Intent makeNotificationIntent(Context context, String msg) {
 
-        Intent intent = new Intent( context, MainActivitytesting.class );
+        Intent intent = new Intent( context, MainActivity.class );
         intent.putExtra( NOTIFICATION_MSG, msg );
         return intent;
     }
@@ -123,66 +125,72 @@ LocationListener,
         public void onReceive(Context context, Intent intent) {
             // Get extra data included in the Intent
             if (intent.getStringExtra("lab_counter") == null){
+                int currentActivityCode = intent.getIntExtra("currentActivityCode", DetectedActivity.UNKNOWN);
+                Log.d(TAG, "Received: " + currentActivityCode + ", Current: " + previousActivityCode);
 
+                if (currentActivityCode == previousActivityCode)
+                    return;
 
-            int currentActivityCode = intent.getIntExtra("currentActivityCode", DetectedActivity.UNKNOWN);
-            Log.d(TAG, "Received: " + currentActivityCode + ", Current: " + previousActivityCode);
+                int imageResourceId = -1;
+                int textResourceId = -1;
+                switch (currentActivityCode) {
+                    case DetectedActivity.STILL:
+                        imageResourceId = R.drawable.still;
+                        textResourceId = R.string.activity_still;
+                        break;
+                    case DetectedActivity.WALKING:
+                        imageResourceId = R.drawable.walking;
+                        textResourceId = R.string.activity_walking;
+                        break;
+                    case DetectedActivity.RUNNING:
+                        imageResourceId = R.drawable.running;
+                        textResourceId = R.string.activity_running;
+                        break;
+                }
+                if (imageResourceId != -1) {
+                    mActivityText.setText(textResourceId);
+                    mActivityText.setVisibility(View.VISIBLE);
+                    mActivityImage.setImageResource(imageResourceId);
+                    mActivityImage.setVisibility(View.VISIBLE);
+                } else {
+                    mActivityText.setVisibility(View.GONE);
+                    mActivityImage.setVisibility(View.GONE);
+                }
+                // Get data for the intent
+                int toastTextId = -1;
+                switch (previousActivityCode) {
+                    case DetectedActivity.STILL:
+                        toastTextId = R.string.activity_summary_still;
+                        break;
+                    case DetectedActivity.WALKING:
+                        toastTextId = R.string.activity_summary_walking;
+                        break;
+                    case DetectedActivity.RUNNING:
+                        toastTextId = R.string.activity_summary_running;
+                        break;
+                }
+                // Whenever a user switches to a new activity,
+                // a toast pops up displaying how long the last activity lasted.
+                // For instance, if the user was walking and became still,
+                // a toast may pop up announcing "You have just walked for 1 min, 36 seconds".
+                if (toastTextId != -1) {
+                    long elapsed = (System.currentTimeMillis() - previousActivityStart) / 1000;
+                    String text = getString(toastTextId, elapsed / 60, elapsed % 60);
+                    Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                    Log.d(TAG, text);
+                }
 
-            if (currentActivityCode == previousActivityCode)
-                return;
-
-            int imageResourceId = -1;
-            int textResourceId = -1;
-            switch (currentActivityCode) {
-                case DetectedActivity.STILL:
-                    imageResourceId = R.drawable.still;
-                    textResourceId = R.string.activity_still;
-                    break;
-                case DetectedActivity.WALKING:
-                    imageResourceId = R.drawable.walking;
-                    textResourceId = R.string.activity_walking;
-                    break;
-                case DetectedActivity.RUNNING:
-                    imageResourceId = R.drawable.running;
-                    textResourceId = R.string.activity_running;
-                    break;
+                previousActivityCode = currentActivityCode;
+                previousActivityStart = System.currentTimeMillis();
             }
-            if (imageResourceId != -1) {
-                mActivityText.setText(textResourceId);
-                mActivityText.setVisibility(View.VISIBLE);
-                mActivityImage.setImageResource(imageResourceId);
-                mActivityImage.setVisibility(View.VISIBLE);
-            } else {
-                mActivityText.setVisibility(View.GONE);
-                mActivityImage.setVisibility(View.GONE);
-            }
-            // Get data for the intent
-            int toastTextId = -1;
-            switch (previousActivityCode) {
-                case DetectedActivity.STILL:
-                    toastTextId = R.string.activity_summary_still;
-                    break;
-                case DetectedActivity.WALKING:
-                    toastTextId = R.string.activity_summary_walking;
-                    break;
-                case DetectedActivity.RUNNING:
-                    toastTextId = R.string.activity_summary_running;
-                    break;
-            }
-            // Whenever a user switches to a new activity,
-            // a toast pops up displaying how long the last activity lasted.
-            // For instance, if the user was walking and became still,
-            // a toast may pop up announcing "You have just walked for 1 min, 36 seconds".
-            if (toastTextId != -1) {
-                long elapsed = (System.currentTimeMillis() - previousActivityStart) / 1000;
-                String text = getString(toastTextId, elapsed / 60, elapsed % 60);
-                Toast.makeText(context, text, Toast.LENGTH_LONG).show();
-                Log.d(TAG, text);
-            }
+        else {
+                Toast.makeText(context, "just entered " , Toast.LENGTH_LONG).show();
+//                if (Integer.valueOf(intent.getStringExtra("place")) == 1){
+//                    currPlace = 1;}
+                onEnter = true;
 
-            previousActivityCode = currentActivityCode;
-            previousActivityStart = System.currentTimeMillis();
-        }}
+            }
+        }
     };
 
     @Override
@@ -193,7 +201,8 @@ LocationListener,
 
         mActivityText.setVisibility(View.GONE);
         mActivityImage.setVisibility(View.GONE);
-
+//        textLab.setText(Integer.toString(fullerVisits));
+//        textLib.setText(Integer.toString(gordonVisits));
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         sensorManager.registerListener(MainActivity.this, accel, SensorManager.SENSOR_DELAY_FASTEST);
@@ -430,16 +439,12 @@ LocationListener,
 
     private void writeActualLocation(Location location) {
 
-//        textLat.setText( "Lat: " + location.getLatitude() );
-//        textLong.setText( "Long: " + location.getLongitude() );
-
         markerLocation(new LatLng(location.getLatitude(), location.getLongitude()));
     }
 
 
 
     private void writeLastLocation() {
-        Log.i(TAG, "here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!. ");
         writeActualLocation(lastLocation);
     }
 
@@ -671,92 +676,100 @@ LocationListener,
             geoFenceLimits2.remove();
     }
 
-    public static float sum(float[] array) {
-        float summed = 0;
-        for (int i = 0; i < array.length; i++) {
-            summed += array[i];
-        }
-        return summed;
-    }
     public static float norm(float[] array) {
         float normed = 0;
         for (int i = 0; i < array.length; i++) {
-            normed += array[i] * array[i];
+            normed = normed + array[i] * array[i];
         }
         return (float) Math.sqrt(normed);
     }
 
-
     public static float dot(float[] a, float[] b) {
-        float dotted = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+        float dotted = a[0] * b[0]
+                     + a[1] * b[1]
+                     + a[2] * b[2];
         return dotted;
     }
 
-    private static final int accelSamples = 50;
-    private static final int VEL_RING_SIZE = 5;
-    private static final float stepSensitivity = 20f;
+    public static float sum(float[] array) {
+        float summed = 0;
+        for (int i = 0; i < array.length; i++) {
+            summed = summed + array[i];
+        }
+        return summed;
+    }
+    private static final float stepSensitivity = 30f;
 
     private static final int stepTime = 200000000;
 
     private int accelCounter = 0;
-    private float[] accelX = new float[accelSamples];
-    private float[] accelY = new float[accelSamples];
-    private float[] accelZ = new float[accelSamples];
+    private float[] accelX = new float[50];
+    private float[] accelY = new float[50];
+    private float[] accelZ = new float[50];
     private int velRingCounter = 0;
-    private float[] velRing = new float[VEL_RING_SIZE];
-    private long lastStepTimeNs = 0;
+    private float[] velRing = new float[5];
+    private long previousStep = 0;
     private float oldVelocityEstimate = 0;
 
-    public void updateAccel(long timeNs, float x, float y, float z) {
+    public void calcSteps(long time, float x, float y, float z) {
         float[] currentAccel = new float[3];
         currentAccel[0] = x;
         currentAccel[1] = y;
         currentAccel[2] = z;
 
         accelCounter++;
-        accelX[accelCounter % accelSamples] = currentAccel[0];
-        accelY[accelCounter % accelSamples] = currentAccel[1];
-        accelZ[accelCounter % accelSamples] = currentAccel[2];
+        accelX[accelCounter % 50] = currentAccel[0];
+        accelY[accelCounter % 50] = currentAccel[1];
+        accelZ[accelCounter % 50] = currentAccel[2];
 
-        float[] worldZ = new float[3];
-        worldZ[0] = sum(accelX) / Math.min(accelCounter, accelSamples);
-        worldZ[1] = sum(accelY) / Math.min(accelCounter, accelSamples);
-        worldZ[2] = sum(accelZ) / Math.min(accelCounter, accelSamples);
+        float[] movement = new float[3];
+        movement[0] = sum(accelX) / Math.min(accelCounter, 50);
+        movement[1] = sum(accelY) / Math.min(accelCounter, 50);
+        movement[2] = sum(accelZ) / Math.min(accelCounter, 50);
 
-        float normalization_factor = norm(worldZ);
+        float normized = norm(movement);
 
-        worldZ[0] = worldZ[0] / normalization_factor;
-        worldZ[1] = worldZ[1] / normalization_factor;
-        worldZ[2] = worldZ[2] / normalization_factor;
+        movement[0] = movement[0] / normized;
+        movement[1] = movement[1] / normized;
+        movement[2] = movement[2] / normized;
 
-        float currentZ = dot(worldZ, currentAccel) - normalization_factor;
+        float currentZ = dot(movement, currentAccel) - normized;
         velRingCounter++;
-        velRing[velRingCounter % VEL_RING_SIZE] = currentZ;
+        velRing[velRingCounter % 5] = currentZ;
 
         float velocityEstimate = sum(velRing);
 
-        String lab_counter = "lab_counter";
-        String lib_counter = "lib_counter";
-//        Log.d(TAG, lab_counter);
-//        Log.d(TAG, lib_counter);
-
-
-        if (velocityEstimate > stepSensitivity && oldVelocityEstimate <= stepSensitivity
-                && (timeNs - lastStepTimeNs > stepTime)) {
+        if (velocityEstimate > stepSensitivity &&
+            oldVelocityEstimate <= stepSensitivity &&
+            (time - previousStep > stepTime) &&
+            onEnter == true) {
             steps += 1;
-            TextView textLib = (TextView) findViewById(R.id.libraryGeoFenceText);
-            TextView textLab = (TextView) findViewById(R.id.fullerLabsGeoFenceText);
-            textLab.setText(Integer.toString(steps));
-            textLib.setText(Integer.toString(steps));
-            lastStepTimeNs = timeNs;
+           if (steps > 5) {
+                TextView textLib = (TextView) findViewById(R.id.libraryGeoFenceText);
+                TextView textLab = (TextView) findViewById(R.id.fullerLabsGeoFenceText);
+               textLab.setText(Integer.toString(2));
+                if (currPlace.equals("Fuller")){
+                    fullerVisits += 1;
+                    textLab.setText(Integer.toString(fullerVisits));
+                }
+                else if (currPlace.equals("Fuller")){
+                    gordonVisits += 1;
+                    textLib.setText(Integer.toString(gordonVisits));
+                }
+                onEnter = false;
+            }
+            previousStep = time;
         }
         oldVelocityEstimate = velocityEstimate;
     }
     @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-        if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            updateAccel(
-                    sensorEvent.timestamp, sensorEvent.values[0], sensorEvent.values[1], sensorEvent.values[2]);
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            calcSteps(
+                    event.timestamp,
+                    event.values[0],
+                    event.values[1],
+                    event.values[2]);
         }
     }
 
