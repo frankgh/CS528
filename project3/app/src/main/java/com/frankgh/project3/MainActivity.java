@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private static final String TAG = "MainActivity";
     private static final String NOTIFICATION_MSG = "NOTIFICATION MSG";
     private static final long GEO_DURATION = 60 * 60 * 1000;
-    private static final float GEOFENCE_RADIUS = 500.0f; // in meters
+    private static final float GEOFENCE_RADIUS = 50.0f; // in meters
     private static final float stepSensitivity = 30f;
     private static final int stepTime = 200000000;
     public static TextView textLib, textLab;
@@ -280,9 +280,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates(mApiClient, 0, mPendingIntent);
         getLastKnownLocation();
         startLocationUpdates();
-        LatLng fullerLabs = new LatLng(42.274978, -71.806632);
+        LatLng fullerLabs = new LatLng(42.275177, -71.805926);
         //markerForGeofence(fullerLabs);
-        LatLng gordonLib = new LatLng(42.284978, -71.806632);
+        LatLng gordonLib = new LatLng(42.274228, -71.806353);
         markersForGeofence(fullerLabs, gordonLib);
         startGeofence();
         drawGeofence();
@@ -405,7 +405,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         map = googleMap;
         //map.setOnMapClickListener(this);
 
-
+        float zoom = 14f;
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(42.275177, -71.805926), zoom);
+        map.animateCamera(cameraUpdate);
         //map.setOnMarkerClickListener(this);
     }
 
@@ -449,6 +451,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                         " | Lat: " + lastLocation.getLatitude());
                 writeLastLocation();
                 startLocationUpdates();
+
+
+                float zoom = 14f;
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(lastLocation.getLatitude(), lastLocation.getLongitude()), zoom);
+                map.animateCamera(cameraUpdate);
             } else {
                 Log.w(TAG, "No location retrieved yet");
                 startLocationUpdates();
@@ -475,9 +482,9 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
             if (locationMarker != null)
                 locationMarker.remove();
             locationMarker = map.addMarker(markerOptions);
-            float zoom = 14f;
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, zoom);
-            map.animateCamera(cameraUpdate);
+//            float zoom = 14f;
+//            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, zoom);
+//            map.animateCamera(cameraUpdate);
         }
     }
 
