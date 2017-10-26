@@ -109,64 +109,64 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         public void onReceive(Context context, Intent intent) {
             // Get extra data included in the Intent
 //            if (intent.getStringExtra("dets") == null) {
-                int currentActivityCode = intent.getIntExtra("currentActivityCode", DetectedActivity.UNKNOWN);
-                Log.d(TAG, "Received: " + currentActivityCode + ", Current: " + previousActivityCode);
+            int currentActivityCode = intent.getIntExtra("currentActivityCode", DetectedActivity.UNKNOWN);
+            Log.d(TAG, "Received: " + currentActivityCode + ", Current: " + previousActivityCode);
 
-                if (currentActivityCode == previousActivityCode)
-                    return;
+            if (currentActivityCode == previousActivityCode)
+                return;
 
-                int imageResourceId = -1;
-                int textResourceId = -1;
-                switch (currentActivityCode) {
-                    case DetectedActivity.STILL:
-                        imageResourceId = R.drawable.still;
-                        textResourceId = R.string.activity_still;
-                        break;
-                    case DetectedActivity.WALKING:
-                        imageResourceId = R.drawable.walking;
-                        textResourceId = R.string.activity_walking;
-                        break;
-                    case DetectedActivity.RUNNING:
-                        imageResourceId = R.drawable.running;
-                        textResourceId = R.string.activity_running;
-                        break;
-                }
-                if (imageResourceId != -1) {
-                    mActivityText.setText(textResourceId);
-                    mActivityText.setVisibility(View.VISIBLE);
-                    mActivityImage.setImageResource(imageResourceId);
-                    mActivityImage.setVisibility(View.VISIBLE);
-                } else {
-                    mActivityText.setVisibility(View.GONE);
-                    mActivityImage.setVisibility(View.GONE);
-                }
-                // Get data for the intent
-                int toastTextId = -1;
-                switch (previousActivityCode) {
-                    case DetectedActivity.STILL:
-                        toastTextId = R.string.activity_summary_still;
-                        break;
-                    case DetectedActivity.WALKING:
-                        toastTextId = R.string.activity_summary_walking;
-                        break;
-                    case DetectedActivity.RUNNING:
-                        toastTextId = R.string.activity_summary_running;
-                        break;
-                }
-                // Whenever a user switches to a new activity,
-                // a toast pops up displaying how long the last activity lasted.
-                // For instance, if the user was walking and became still,
-                // a toast may pop up announcing "You have just walked for 1 min, 36 seconds".
-                if (toastTextId != -1) {
-                    long elapsed = (System.currentTimeMillis() - previousActivityStart) / 1000;
-                    String text = getString(toastTextId, elapsed / 60, elapsed % 60);
-                    Toast.makeText(context, text, Toast.LENGTH_LONG).show();
-                    Log.d(TAG, text);
-                }
+            int imageResourceId = -1;
+            int textResourceId = -1;
+            switch (currentActivityCode) {
+                case DetectedActivity.STILL:
+                    imageResourceId = R.drawable.still;
+                    textResourceId = R.string.activity_still;
+                    break;
+                case DetectedActivity.WALKING:
+                    imageResourceId = R.drawable.walking;
+                    textResourceId = R.string.activity_walking;
+                    break;
+                case DetectedActivity.RUNNING:
+                    imageResourceId = R.drawable.running;
+                    textResourceId = R.string.activity_running;
+                    break;
+            }
+            if (imageResourceId != -1) {
+                mActivityText.setText(textResourceId);
+                mActivityText.setVisibility(View.VISIBLE);
+                mActivityImage.setImageResource(imageResourceId);
+                mActivityImage.setVisibility(View.VISIBLE);
+            } else {
+                mActivityText.setVisibility(View.GONE);
+                mActivityImage.setVisibility(View.GONE);
+            }
+            // Get data for the intent
+            int toastTextId = -1;
+            switch (previousActivityCode) {
+                case DetectedActivity.STILL:
+                    toastTextId = R.string.activity_summary_still;
+                    break;
+                case DetectedActivity.WALKING:
+                    toastTextId = R.string.activity_summary_walking;
+                    break;
+                case DetectedActivity.RUNNING:
+                    toastTextId = R.string.activity_summary_running;
+                    break;
+            }
+            // Whenever a user switches to a new activity,
+            // a toast pops up displaying how long the last activity lasted.
+            // For instance, if the user was walking and became still,
+            // a toast may pop up announcing "You have just walked for 1 min, 36 seconds".
+            if (toastTextId != -1) {
+                long elapsed = (System.currentTimeMillis() - previousActivityStart) / 1000;
+                String text = getString(toastTextId, elapsed / 60, elapsed % 60);
+                Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+                Log.d(TAG, text);
+            }
 
-                previousActivityCode = currentActivityCode;
-                previousActivityStart = System.currentTimeMillis();
-            if (intent.getStringExtra("dets") != null){
+            previousActivityCode = currentActivityCode;
+            previousActivityStart = System.currentTimeMillis();
+            if (intent.getStringExtra("dets") != null) {
                 Toast.makeText(context, intent.getStringExtra("dets"), Toast.LENGTH_LONG).show();
 //                if (Integer.valueOf(intent.getStringExtra("place")) == 1){
 //                    currPlace = 1;}
@@ -191,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     private float[] velocityArr = new float[5];
     private long previousStep = 0;
     private float previousVel = 0;
+    private PendingGeofenceTask mPendingGeofenceTask = PendingGeofenceTask.NONE;
 
     public static Intent makeNotificationIntent(Context context, String msg) {
 
@@ -228,6 +229,8 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
+        mPendingGeofenceTask = PendingGeofenceTask.ADD;
+
         mActivityText.setVisibility(View.GONE);
         mActivityImage.setVisibility(View.GONE);
 //        textLab.setText(Integer.toString(fullerVisits));
@@ -252,7 +255,6 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 new IntentFilter("ActivityRecognizedService#ActivityChange"));
         Log.d(TAG, "LocalBroadcastManager.registerReceiver:mMessageReceiver");
         initGMaps();
-
     }
 
     private void initGMaps() {
@@ -284,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
         //markerForGeofence(fullerLabs);
         LatLng gordonLib = new LatLng(42.274228, -71.806353);
         markersForGeofence(fullerLabs, gordonLib);
-        startGeofence();
+//        startGeofence();
         drawGeofence();
     }
 
@@ -327,6 +329,12 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     protected void onStart() {
         super.onStart();
 
+        if (!checkPermission()) {
+            askPermission();
+        } else {
+            performPendingGeofenceTask();
+        }
+
         // Call GoogleApiClient connection when starting the Activity
         mApiClient.connect();
     }
@@ -342,7 +350,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.geofence: {
-                startGeofence();
+//                startGeofence();
                 return true;
             }
             case R.id.clear: {
@@ -382,10 +390,11 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Permission granted
                     getLastKnownLocation();
-
+                    performPendingGeofenceTask();
                 } else {
                     // Permission denied
                     permissionsDenied();
+                    mPendingGeofenceTask = PendingGeofenceTask.NONE;
                 }
                 break;
             }
@@ -542,6 +551,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
 
     // Start Geofence creation process
     private void startGeofence() {
+        mPendingGeofenceTask = PendingGeofenceTask.NONE;
         Log.i(TAG, "startGeofence()");
 
         //Geofence geofence2 = createGeofence( fullerLabs, GEOFENCE_RADIUS );
@@ -610,6 +620,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     @Override
     public void onResult(@NonNull Status status) {
         Log.i(TAG, "onResult: " + status);
+        mPendingGeofenceTask = PendingGeofenceTask.NONE;
         if (status.isSuccess()) {
             //saveGeofence();
             drawGeofence();
@@ -724,7 +735,7 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
                 if (currPlace.equals("Fuller")) {
                     fullerVisits += 1;
                     textLab.setText(Integer.toString(fullerVisits));
-                    Toast.makeText(this,"Heelooo" , Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Heelooo", Toast.LENGTH_SHORT).show();
                 } else if (currPlace.equals("Gordon")) {
                     gordonVisits += 1;
                     textLib.setText(Integer.toString(gordonVisits));
@@ -752,4 +763,21 @@ public class MainActivity extends AppCompatActivity implements GoogleApiClient.C
     public void onAccuracyChanged(Sensor sensor, int i) {
 
     }
+
+    /**
+     * Performs the geofencing task that was pending until location permission was granted.
+     */
+    private void performPendingGeofenceTask() {
+        if (mPendingGeofenceTask == PendingGeofenceTask.ADD) {
+            startGeofence();
+        }
+    }
+
+    /**
+     * Tracks whether the user requested to add or remove geofences, or to do neither.
+     */
+    private enum PendingGeofenceTask {
+        ADD, NONE
+    }
+
 }
