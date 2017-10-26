@@ -49,13 +49,22 @@ public class GeofenceTrasitionService extends IntentService{
 
     private void DisplayLoggingInfo(String dets) {
         Log.d(TAG, "entered DisplayLoggingInfo");
+        String place = "Fuller";
+
         if(dets.equals("Entering Gordon Lib")) {
             ++lib_counter;
+            place = "Gordon";
         } else if(dets.equals("Entering Fuller Labs")){
             ++lab_counter;
         }
+        if(dets.equals("Exiting Gordon Lib")) {
+
+        } else if(dets.equals("Exiting Fuller Labs")){
+
+    }
         count_intent.putExtra("lib_counter", String.valueOf(lib_counter));
         count_intent.putExtra("lab_counter", String.valueOf(lab_counter));
+        count_intent.putExtra("place", place);
         sendBroadcast(count_intent);
     }
 
@@ -109,7 +118,7 @@ public class GeofenceTrasitionService extends IntentService{
 
         // Intent to start the main Activity
 
-        Intent notificationIntent = MainActivitytesting.makeNotificationIntent(
+        Intent notificationIntent = MainActivity.makeNotificationIntent(
                 getApplicationContext(), msg
         );
 
