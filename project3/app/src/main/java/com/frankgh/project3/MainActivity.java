@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity
      * Interval of 5 seconds
      */
     private static final int ACTIVITY_RECOGNITION_DETECTION_INTERVAL = 5000;
-    private static final float GEO_FENCE_RADIUS = 500.0f; // in meters
+    private static final float GEO_FENCE_RADIUS = 50.0f; // in meters
     private static final long GEO_FENCE_DURATION = 60 * 60 * 1000;
     private static final int GEO_FENCE_REQ_CODE = 0;
     private static final int REQ_PERMISSION = 999;
@@ -145,7 +145,8 @@ public class MainActivity extends AppCompatActivity
         getLastKnownLocation();
         startLocationUpdates();
         createGeoFences();
-
+        resumeActivityRecognitionService();
+        resumeLocationUpdates();
     }
 
     @Override
@@ -157,7 +158,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onRestart() {
         super.onRestart();
-        resumeActivityRecognitionService();
+        mApiClient.connect();
     }
 
     @Override
@@ -165,6 +166,7 @@ public class MainActivity extends AppCompatActivity
         super.onStop();
         stopActivityRecognitionService();
         stopGeoFenceTransitionService();
+        stopLocationUpdates();
         // Disconnect GoogleApiClient when stopping Activity
         mApiClient.disconnect();
     }
@@ -213,18 +215,16 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
+        // Add a marker in Fuller and move the camera
+        mMap.addMarker(new MarkerOptions().position(FULLER_COORDS).title("Marker in Fuller"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(FULLER_COORDS));
+        mMapView.onResume();
 
         if (!checkFineLocationAccessPermission()) {
             requestFineLocationAccessPermission();
             return;
         }
-
         mMap.setMyLocationEnabled(true);
-        // Add a marker in Sydney and move the camera
-        mMap.addMarker(new MarkerOptions().position(FULLER_COORDS).title("Marker in Fuller"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(FULLER_COORDS));
-        mMapView.onResume();
     }
 
     // Verify user's response of the permission requested
@@ -238,7 +238,6 @@ public class MainActivity extends AppCompatActivity
                     getLastKnownLocation(); // Permission granted
                 } else {
                     Log.w(TAG, "permissionsDenied");
-                    finishAndRemoveTask(); // Permission denied
                 }
                 break;
             }
@@ -340,18 +339,6 @@ public class MainActivity extends AppCompatActivity
         } else requestFineLocationAccessPermission();
     }
 
-    // Start location Updates
-    private void startLocationUpdates() {
-        Log.i(TAG, "startLocationUpdates()");
-        mLocationRequest = LocationRequest.create()
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(UPDATE_INTERVAL)
-                .setFastestInterval(FASTEST_INTERVAL);
-
-        if (checkFineLocationAccessPermission())
-            LocationServices.FusedLocationApi.requestLocationUpdates(mApiClient, mLocationRequest, this);
-    }
-
     private void updateCurrentLocation(Location location) {
         Log.i(TAG, "updateCurrentLocation(" + location.getLatitude() + ", " + location.getLongitude() + ")");
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
@@ -414,6 +401,33 @@ public class MainActivity extends AppCompatActivity
                 .fillColor(Color.argb(100, 150, 150, 150))
                 .radius(GEO_FENCE_RADIUS);
         mGeoFenceLimits.add(mMap.addCircle(circleOptions1));
+    }
+
+    // Start location Updates
+    private void startLocationUpdates() {
+        Log.i(TAG, "startLocationUpdates()");
+        mLocationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(UPDATE_INTERVAL)
+                .setFastestInterval(FASTEST_INTERVAL);
+
+        if (checkFineLocationAccessPermission())
+            LocationServices.FusedLocationApi.requestLocationUpdates(mApiClient, mLocationRequest, this);
+    }
+
+    // Start location Updates
+    private void resumeLocationUpdates() {
+        Log.i(TAG, "mLocationRequest()");
+        if (mLocationRequest != null && checkFineLocationAccessPermission()) {
+            LocationServices.FusedLocationApi.requestLocationUpdates(mApiClient, mLocationRequest, this);
+        }
+    }
+
+    private void stopLocationUpdates() {
+        Log.i(TAG, "mLocationRequest()");
+        if (mLocationRequest != null) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mApiClient, this);
+        }
     }
 
     private void startActivityRecognitionService() {
