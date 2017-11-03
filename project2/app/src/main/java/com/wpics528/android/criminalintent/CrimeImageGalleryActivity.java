@@ -31,7 +31,23 @@ import java.util.UUID;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Bundle;
+import android.util.SparseArray;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.face.Face;
+import com.google.android.gms.vision.face.FaceDetector;
 public class CrimeImageGalleryActivity extends AppCompatActivity {
 
     @BindView(R.id.crimeImage_recycler_view)
@@ -97,6 +113,10 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
             mActivity = activity;
             mCrimePics = crimePics;
         }
+        @Override
+        public int getItemViewType(int position) {
+            return position;
+        }
 
         @Override
         public CrimeImageListHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -107,10 +127,25 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onBindViewHolder(final CrimeImageListHolder holder, int position) {
+        public void onBindViewHolder(final CrimeImageListHolder holder, final int position) {
             final String currentPhotoPath = "file:" + mStorageFile.getAbsolutePath();
             final String photoFilename = mCrimePics.get(position);
 
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inMutable=true;
+            holder.crimeImageView.buildDrawingCache();
+            Bitmap myBitmap = holder.crimeImageView.getDrawingCache();
+            Bitmap tempBitmap = Bitmap.createBitmap(myBitmap.getWidth(), myBitmap.getHeight(), Bitmap.Config.RGB_565);
+            Canvas tempCanvas = new Canvas(tempBitmap);
+            tempCanvas.drawBitmap(myBitmap, 0, 0, null);
+            FaceDetector faceDetector = new
+                    FaceDetector.Builder(getApplicationContext()).setTrackingEnabled(false)
+                    .build();
+            Frame frame = new Frame.Builder().setBitmap(myBitmap).build();
+            SparseArray<Face> faces = faceDetector.detect(frame);
+            if (faces.size() > 0 && mCrime.isFaceDetectionEnabled()){
+                holder.crimeImageView.setAlpha((float)0.3);
+            }
             holder.crimeImageView.getViewTreeObserver()
                     .addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                         // Wait until layout to call Picasso
@@ -119,6 +154,11 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
                             // Ensure we call this only once
                             holder.crimeImageView.getViewTreeObserver()
                                     .removeOnGlobalLayoutListener(this);
+                            int pos = getItemViewType(position);
+                            if(mCrimePics.get(pos) == null) {
+
+                                holder.crimeImageView.setVisibility(View.GONE);
+                            } else {
 
                             Picasso.with(mActivity)
                                     .load(currentPhotoPath + "/" + photoFilename)
@@ -170,7 +210,7 @@ public class CrimeImageGalleryActivity extends AppCompatActivity {
                                         @Override
                                         public void onError() {
                                         }
-                                    });
+                                    });}
 
                         }
                     });
