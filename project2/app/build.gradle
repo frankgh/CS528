@@ -14,6 +14,9 @@ android {
     buildTypes {
 
     }
+    aaptOptions {
+        cruncherEnabled = false
+    }
 }
 
 ext {
@@ -33,4 +36,6 @@ dependencies {
     compile 'com.jakewharton:butterknife:8.8.1'
     compile 'com.google.android.gms:play-services:7.8+'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.google.android.gms:play-services:7.8+'
 }
