@@ -86,6 +86,7 @@ T_mean = varfun(@Wmean, rawSensorDataTrain);
 T_stdv = varfun(@Wstd,rawSensorDataTrain);
 T_pca  = varfun(@Wpca1,rawSensorDataTrain);
 T_ara  = table(totalAvgResultantAccelTrain, bodyGyroAvgResultantAccelTrain);
+T_mad = varfun(@Wmad,rawSensorDataTrain);
 
 humanActivityData = [T_mean, T_stdv, T_pca, T_ara];
 humanActivityData.activity = trainActivity;
