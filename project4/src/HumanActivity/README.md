@@ -9,7 +9,7 @@ Classify the activity using all classifier types that are available in the class
 
 1. Only the 3 original features (mean, PCA and Standard deviation)?
    
-   #### Classifier:
+   **Classifier:**
    **Model Type**  
    Preset: Bagged Trees  
    Ensemble method: Bag  
@@ -18,14 +18,14 @@ Classify the activity using all classifier types that are available in the class
    **PCA**  
    PCA disabled  
    
-   #### Results:
+   **Results:**
    Accuracy: 96.7%  
    Prediction Speed: ~12000 obs/sec  
    Training time: 30.154 sec  
 
 2. 3 original features (mean, PCA, Standard deviation) and also Average Absolute Difference (i.e. 4 features in total)?
    
-   ### Classifier:
+   **Classifier:**
    **Model Type**  
    Preset: Bagged Trees  
    Ensemble method: Bag  
@@ -34,14 +34,14 @@ Classify the activity using all classifier types that are available in the class
    **PCA**   
    PCA disabled
    
-   ### Results:
+   **Results:**
    Accuracy: 96.7%  
    Prediction Speed: ~12000 obs/sec  
    Training time: 31.084 sec  
 
 3. 3 original features (mean, PCA, Standard deviation) and also Average Absolute Difference and Average Resultant Acceleration (i.e. 5 features in total)?
    
-   ### Classifier:
+   **Classifier:**
    **Model Type**  
    Preset: Subspace KNN  
    Ensemble method: Subspace  
@@ -51,7 +51,7 @@ Classify the activity using all classifier types that are available in the class
    **PCA**  
    PCA disabled
    
-   ### Results:
+   **Results:**
    Accuracy: 96.6%  
    Prediction Speed: ~330 obs/sec  
    Training time: 39.07 sec  
