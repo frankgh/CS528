@@ -9,25 +9,6 @@ Classify the activity using all classifier types that are available in the class
 
 1. Only the 3 original features (mean, PCA and Standard deviation)?
    
-   ##### Classifier:
-   
-   **Model Type**
-   Preset: Bagged Trees
-   Ensemble method: Bag
-   Learner type: Decision tree
-   Number of learners: 30
-   
-   **PCA**
-   PCA disabled
-   
-   ##### Results:
-   
-   Accuracy: 96.7%
-   Prediction Speed: ~12000 obs/sec
-   Training time: 30.154 sec
-
-2. 3 original features (mean, PCA, Standard deviation) and also Average Absolute Difference (i.e. 4 features in total)?
-   
    #### Classifier:
    
    **Model Type**
@@ -40,13 +21,32 @@ Classify the activity using all classifier types that are available in the class
    PCA disabled
    
    #### Results:
+   
+   Accuracy: 96.7%
+   Prediction Speed: ~12000 obs/sec
+   Training time: 30.154 sec
+
+2. 3 original features (mean, PCA, Standard deviation) and also Average Absolute Difference (i.e. 4 features in total)?
+   
+   ### Classifier:
+   
+   **Model Type**..
+   Preset: Bagged Trees.
+   Ensemble method: Bag 
+   Learner type: Decision tree  
+   Number of learners: 30...
+   
+   **PCA**   
+   PCA disabled
+   
+   ### Results:
    Accuracy: 96.7%
    Prediction Speed: ~12000 obs/sec
    Training time: 31.084 sec
 
 3. 3 original features (mean, PCA, Standard deviation) and also Average Absolute Difference and Average Resultant Acceleration (i.e. 5 features in total)?
    
-   #### Classifier:
+   ### Classifier:
    
    **Model Type**
    Preset: Subspace KNN
@@ -58,7 +58,7 @@ Classify the activity using all classifier types that are available in the class
    **PCA**
    PCA disabled
    
-   #### Results:
+   ### Results:
    Accuracy: 96.6%
    Prediction Speed: ~330 obs/sec
    Training time: 39.07 sec
@@ -72,11 +72,3 @@ Classify the activity using all classifier types that are available in the class
 
 #### Classifier:
 #### Accuracy:
-
-6. And another item.
-⋅⋅⋅
-...You can have properly indented paragraphs within list items. Notice the blank line above, and the leading spaces (at least one, but we'll use three here to also align the raw Markdown).
-
-⋅⋅⋅To have a line break without a paragraph, you will need to use two trailing spaces.⋅⋅
-⋅⋅⋅Note that this line is separate, but within the same paragraph.⋅⋅
-⋅⋅⋅(This is contrary to the typical GFM line break behaviour, where trailing spaces are not required.)
