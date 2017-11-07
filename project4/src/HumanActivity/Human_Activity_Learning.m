@@ -64,6 +64,11 @@ rawSensorDataTrain = table(...
     total_acc_x_train, total_acc_y_train, total_acc_z_train, ...
     body_gyro_x_train, body_gyro_y_train, body_gyro_z_train);
 
+totalAvgResultantAccelTrain = ...
+    Wavgresacc(total_acc_x_train, total_acc_y_train, total_acc_z_train);
+bodyGyroAvgResultantAccelTrain = ...
+    Wavgresacc(body_gyro_x_train, body_gyro_y_train, body_gyro_z_train);
+
 %% Pre-process Training Data: *Feature Extraction*
 % Lets start with a simple preprocessing technique. Since the raw sensor 
 % data contain fixed-width sliding windows of 2.56sec (128 readings/window) 
@@ -80,8 +85,9 @@ classificationLearner
 T_mean = varfun(@Wmean, rawSensorDataTrain);
 T_stdv = varfun(@Wstd,rawSensorDataTrain);
 T_pca  = varfun(@Wpca1,rawSensorDataTrain);
+T_ara  = table(totalAvgResultantAccelTrain, bodyGyroAvgResultantAccelTrain);
 
-humanActivityData = [T_mean, T_stdv, T_pca];
+humanActivityData = [T_mean, T_stdv, T_pca, T_ara];
 humanActivityData.activity = trainActivity;
 
 %% Use the new features to train a model and assess its performance 
@@ -101,16 +107,16 @@ rawSensorDataTest = table(...
     total_acc_x_test, total_acc_y_test, total_acc_z_test, ...
     body_gyro_x_test, body_gyro_y_test, body_gyro_z_test);
 
-total_avg_resultant_accel = ...
+totalAvgResultantAccelTest = ...
     Wavgresacc(total_acc_x_test,total_acc_y_test,total_acc_z_test);
-body_gyro_avg_resultant_accel = ...
+bodyGyroAvgResultantAccelTest = ...
     Wavgresacc(body_gyro_x_test, body_gyro_y_test, body_gyro_z_test);
 
 % Step 2: Extract features from raw sensor data
 T_mean = varfun(@Wmean, rawSensorDataTest);
 T_stdv = varfun(@Wstd,rawSensorDataTest);
 T_pca  = varfun(@Wpca1,rawSensorDataTest);
-T_ara  = table(total_avg_resultant_accel, body_gyro_avg_resultant_accel);
+T_ara  = table(totalAvgResultantAccelTest, bodyGyroAvgResultantAccelTest);
 
 humanActivityData = [T_mean, T_stdv, T_pca];
 humanActivityData.activity = testActivity;
