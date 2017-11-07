@@ -51,17 +51,39 @@ Classify the activity using all classifier types that are available in the class
    **PCA**  
    PCA disabled
    
-   **Results:**..
+   **Results:**  
    Accuracy: 96.6%  
    Prediction Speed: ~330 obs/sec  
    Training time: 39.07 sec  
 
 4. 3 original features (mean, PCA, Standard deviation), and also Average Absolute Difference, Average Resultant Acceleration and Time Between Peaks (i.e. 6 features in total)?
-
-#### Classifier:
-#### Accuracy:
+   
+   **Classifier:**  
+   **Model Type**  
+   Preset: Subspace   
+   Ensemble method:   
+   Learner type:   
+   Number of learners:   
+   **PCA**  
+   PCA disabled
+   
+   **Results:**  
+   Accuracy:   
+   Prediction Speed:   
+   Training time:   
 
 5. 3 original features (mean, PCA, Standard deviation) and also Average Absolute Difference, Average Resultant Acceleration, Time Between Peaks and Binned Distribution (i.e. 7 features in total)?
-
-#### Classifier:
-#### Accuracy:
+   
+   **Classifier:**  
+   **Model Type**  
+   Preset: Subspace   
+   Ensemble method:   
+   Learner type:   
+   Number of learners:   
+   **PCA**  
+   PCA disabled
+   
+   **Results:**  
+   Accuracy:   
+   Prediction Speed:   
+   Training time:   
