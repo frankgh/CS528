@@ -40,6 +40,7 @@
 % * |downloadSensorData| : This function will download the dataset and
 % extract its contents to a folder called: UCI HAR Dataset
 % This folder must be present before you execute |saveSensorDataAsMATFiles|
+clear;
 if ~exist('UCI HAR Dataset','file')
     downloadSensorData;
 end
@@ -85,9 +86,11 @@ classificationLearner
 T_mean = varfun(@Wmean, rawSensorDataTrain);
 T_stdv = varfun(@Wstd,rawSensorDataTrain);
 T_pca  = varfun(@Wpca1,rawSensorDataTrain);
+T_mad  = varfun(@Wmad,rawSensorDataTrain);
 T_ara  = table(totalAvgResultantAccelTrain, bodyGyroAvgResultantAccelTrain);
+T_bd   = varfun(@Wbd,rawSensorDataTrain);
 
-humanActivityData = [T_mean, T_stdv, T_pca, T_ara];
+humanActivityData = [T_mean, T_stdv, T_pca, T_mad, T_ara, T_bd];
 humanActivityData.activity = trainActivity;
 
 %% Use the new features to train a model and assess its performance 
@@ -116,9 +119,10 @@ bodyGyroAvgResultantAccelTest = ...
 T_mean = varfun(@Wmean, rawSensorDataTest);
 T_stdv = varfun(@Wstd,rawSensorDataTest);
 T_pca  = varfun(@Wpca1,rawSensorDataTest);
+T_mad  = varfun(@Wmad,rawSensorDataTest);
 T_ara  = table(totalAvgResultantAccelTest, bodyGyroAvgResultantAccelTest);
 
-humanActivityData = [T_mean, T_stdv, T_pca];
+humanActivityData = [T_mean, T_stdv, T_pca, T_mad, T_ara];
 humanActivityData.activity = testActivity;
 
 % Step 3: Use trained model to predict activity on new sensor data
