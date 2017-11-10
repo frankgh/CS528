@@ -121,8 +121,9 @@ T_stdv = varfun(@Wstd,rawSensorDataTest);
 T_pca  = varfun(@Wpca1,rawSensorDataTest);
 T_mad  = varfun(@Wmad,rawSensorDataTest);
 T_ara  = table(totalAvgResultantAccelTest, bodyGyroAvgResultantAccelTest);
+T_bd   = varfun(@Wbd,rawSensorDataTest);
 
-humanActivityData = [T_mean, T_stdv, T_pca, T_mad, T_ara];
+humanActivityData = [T_mean, T_stdv, T_pca, T_mad, T_ara, T_bd];
 humanActivityData.activity = testActivity;
 
 % Step 3: Use trained model to predict activity on new sensor data
