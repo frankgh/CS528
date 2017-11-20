@@ -36,11 +36,24 @@ public class MainActivity extends AppCompatActivity {
         // Check if user is signed in (non-null) and update UI accordingly.
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser == null) {
-            Log.d(TAG, "currentUser is null. Launching ChooserActivity");
-            startActivity(new Intent(this, ChooserActivity.class));
-            finish();
-            Log.d(TAG, "Finish MainActivity");
+            showLoginChooser();
+        } else {
+            startParkingService();
         }
     }
     // [END on_start_check_user]
+
+    private void showLoginChooser() {
+        Log.d(TAG, "currentUser is null. Launching ChooserActivity");
+        startActivity(new Intent(this, ChooserActivity.class));
+        Log.d(TAG, "Finish MainActivity");
+        finish();
+    }
+
+    private void startParkingService() {
+        Log.d(TAG, "startParkingService");
+        // Start the Parking Service
+        Intent i = new Intent(getApplicationContext(), ParkingService.class);
+        getApplicationContext().startService(i);
+    }
 }

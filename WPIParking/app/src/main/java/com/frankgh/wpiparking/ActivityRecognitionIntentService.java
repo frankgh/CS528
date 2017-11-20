@@ -15,17 +15,17 @@ import java.util.Set;
  * @author Vaseem
  */
 
-public class ActivityRecognizedService extends IntentService {
+public class ActivityRecognitionIntentService extends IntentService {
 
     private static final String TAG = "ActivityRecognition";
     private static final String[] CODE_TEXT = {"IN_VEHICLE", "ON_BICYCLE", "ON_FOOT",
             "STILL", "UNKNOWN", "TILTING", "", "WALKING", "RUNNING"};
 
-    public ActivityRecognizedService() {
-        super("ActivityRecognizedService");
+    public ActivityRecognitionIntentService() {
+        super("ActivityRecognitionIntentService");
     }
 
-    public ActivityRecognizedService(String name) {
+    public ActivityRecognitionIntentService(String name) {
         super(name);
     }
 
@@ -65,7 +65,7 @@ public class ActivityRecognizedService extends IntentService {
             case DetectedActivity.RUNNING:
             case DetectedActivity.WALKING: {
                 Log.d(TAG, typeToText(activity.getType()) + "(" + activity.getType() + "): " + activity.getConfidence());
-                Intent intent = new Intent("ActivityRecognizedService#ActivityChange");
+                Intent intent = new Intent("ActivityRecognitionIntentService#ActivityChange");
                 intent.putExtra("currentActivityCode", activity.getType());
                 LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
                 break;
