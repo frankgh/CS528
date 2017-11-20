@@ -1,8 +1,10 @@
-package com.frankgh.wpiparking;
+package com.frankgh.wpiparking.auth;
 
 import android.app.ProgressDialog;
 import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
+
+import com.frankgh.wpiparking.R;
 
 /**
  * @author Francisco Guerrero <email>me@frankgh.com</email> on 11/20/17.
