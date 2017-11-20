@@ -33,7 +33,7 @@ final class Constants {
     /**
      * Map for storing information about airports in the San Francisco bay area.
      */
-    static final HashMap<String, LatLng> BAY_AREA_LANDMARKS = new HashMap<>();
+    static final HashMap<String, LatLng> WPI_AREA_LANDMARKS = new HashMap<>();
     private static final String PACKAGE_NAME = "com.google.android.gms.location.Geofence";
     static final String GEOFENCES_ADDED_KEY = PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";
     /**
@@ -48,11 +48,15 @@ final class Constants {
             GEOFENCE_EXPIRATION_IN_HOURS * 60 * 60 * 1000;
 
     static {
-        // San Francisco International Airport.
-        BAY_AREA_LANDMARKS.put("SFO", new LatLng(37.621313, -122.378955));
+        // Worcester Polytechnic Institute.
+        WPI_AREA_LANDMARKS.put("WPI", new LatLng(42.274641, -71.80634));
 
-        // Googleplex.
-        BAY_AREA_LANDMARKS.put("GOOGLE", new LatLng(37.422611, -122.0840577));
+        // Boynton Lot.
+
+        // Hackfeld Lot.
+        WPI_AREA_LANDMARKS.put("WPI_Hackfeld", new LatLng(42.272997, -71.812771));
+
+        // West Lot.
     }
 
     private Constants() {

@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "lots": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": false
+      }
+    }
+  }
+}

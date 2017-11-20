@@ -4,7 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +13,8 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.facebook.FacebookSdk;
+import com.frankgh.wpiparking.BuildConfig;
 import com.frankgh.wpiparking.R;
 
 /**
@@ -24,6 +26,8 @@ import com.frankgh.wpiparking.R;
  * {@link AnonymousAuthActivity}
  */
 public class ChooserActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
+
+    private static final String TAG = "ChooserActivity";
 
     private static final Class[] CLASSES = new Class[]{
             GoogleLoginActivity.class,
@@ -41,8 +45,6 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chooser);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         // Set up ListView and Adapter
         ListView listView = findViewById(R.id.list_view);
@@ -58,6 +60,12 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
         Class clicked = CLASSES[position];
+
+        if (clicked == FacebookLoginActivity.class) {
+            Log.d(TAG, "Setting application ID for Facebook");
+            FacebookSdk.setApplicationId(BuildConfig.FB_APP_ID);
+        }
+
         startActivity(new Intent(this, clicked));
     }
 
