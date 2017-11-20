@@ -15,17 +15,12 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.EmailAuthProvider;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
 public class AnonymousAuthActivity extends BaseActivity implements
         View.OnClickListener {
 
     private static final String TAG = "AnonymousAuth";
-
-    // [START declare_auth]
-    private FirebaseAuth mAuth;
-    // [END declare_auth]
 
     private EditText mEmailField;
     private EditText mPasswordField;
@@ -34,10 +29,6 @@ public class AnonymousAuthActivity extends BaseActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_anonymous_auth);
-
-        // [START initialize_auth]
-        mAuth = FirebaseAuth.getInstance();
-        // [END initialize_auth]
 
         // Fields
         mEmailField = findViewById(R.id.field_email);

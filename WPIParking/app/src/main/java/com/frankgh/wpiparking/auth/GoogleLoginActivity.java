@@ -18,7 +18,6 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
@@ -35,11 +34,8 @@ public class GoogleLoginActivity extends BaseActivity {
     private static final int RC_SIGN_IN = 9001;
     @BindView(R.id.status)
     TextView mStatusTextView;
-    // [END declare_auth]
     @BindView(R.id.detail)
     TextView mDetailTextView;
-    // [START declare_auth]
-    private FirebaseAuth mAuth;
     private GoogleSignInClient mGoogleSignInClient;
 
     @Override
@@ -59,10 +55,6 @@ public class GoogleLoginActivity extends BaseActivity {
         // [END config_signin]
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-
-        // [START initialize_auth]
-        mAuth = FirebaseAuth.getInstance();
-        // [END initialize_auth]
     }
 
     // [START on_start_check_user]

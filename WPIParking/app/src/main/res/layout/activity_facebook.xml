@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -16,15 +17,15 @@
         android:gravity="center_horizontal">
 
         <ImageView
-            android:id="@+id/google_icon"
+            android:id="@+id/icon"
             style="@style/ThemeOverlay.FirebaseIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="15dp"
             android:layout_marginTop="24dp"
             android:contentDescription="@string/desc_firebase_lockup"
             android:src="@drawable/firebase_lockup_400"
-            app:layout_constraintStart_toStartOf="@+id/title_text"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
@@ -32,10 +33,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:text="@string/google_title_text"
+            android:text="@string/facebook_title_text"
             android:theme="@style/ThemeOverlay.MyTitleText"
             app:layout_constraintBottom_toTopOf="@+id/status"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
         <TextView
@@ -43,9 +43,8 @@
             style="@style/ThemeOverlay.MyTextDetail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="26dp"
             android:text="@string/signed_out"
-            app:layout_constraintBottom_toBottomOf="@+id/detail"
+            app:layout_constraintBottom_toTopOf="@+id/detail"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
@@ -54,16 +53,13 @@
             style="@style/ThemeOverlay.MyTextDetail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="115dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginTop="115dp"
+            android:layout_marginBottom="72dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="@+id/title_text"
-            app:layout_constraintTop_toBottomOf="@+id/google_icon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             tools:text="Firebase User ID: 123456789abc" />
 
     </android.support.constraint.ConstraintLayout>
-
 
     <RelativeLayout
         android:layout_width="fill_parent"
@@ -71,41 +67,20 @@
         android:layout_weight="1"
         android:background="@color/grey_300">
 
-        <com.google.android.gms.common.SignInButton
-            android:id="@+id/sign_in_button"
+        <com.facebook.login.widget.LoginButton
+            android:id="@+id/button_facebook_login"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true" />
+
+        <Button
+            android:id="@+id/button_facebook_signout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:visibility="visible"
-            tools:visibility="gone" />
-
-        <LinearLayout
-            android:id="@+id/sign_out_and_disconnect"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:orientation="horizontal"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <Button
-                android:id="@+id/sign_out_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/sign_out"
-                android:theme="@style/ThemeOverlay.MyDarkButton" />
-
-            <Button
-                android:id="@+id/disconnect_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/disconnect"
-                android:theme="@style/ThemeOverlay.MyDarkButton" />
-        </LinearLayout>
+            android:text="@string/sign_out"
+            android:theme="@style/ThemeOverlay.MyDarkButton"
+            android:visibility="gone"/>
 
     </RelativeLayout>
 
