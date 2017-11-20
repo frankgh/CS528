@@ -1,4 +1,4 @@
-package com.frankgh.wpiparking;
+package com.frankgh.wpiparking.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -8,6 +8,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.frankgh.wpiparking.R;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -137,6 +138,7 @@ public class GoogleLoginActivity extends BaseActivity {
     }
     // [END signin]
 
+    // [START signout]
     private void signOut() {
         // Firebase sign out
         mAuth.signOut();
@@ -150,6 +152,7 @@ public class GoogleLoginActivity extends BaseActivity {
                     }
                 });
     }
+    // [END signout]
 
     private void revokeAccess() {
         // Firebase sign out
