@@ -10,7 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.facebook.FacebookSdk;
 import com.frankgh.wpiparking.auth.ChooserActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -53,10 +52,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Log.d(TAG, "Setting application ID for Facebook");
-        FacebookSdk.setApplicationId(BuildConfig.FB_APP_ID);
-
         setContentView(R.layout.activity_main);
         Log.d(TAG, "onCreate");
 
