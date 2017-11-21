@@ -1,10 +1,16 @@
 package com.frankgh.wpiparking;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.facebook.FacebookSdk;
 import com.frankgh.wpiparking.auth.ChooserActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -16,10 +22,41 @@ public class MainActivity extends AppCompatActivity {
     // [START declare_auth]
     private FirebaseAuth mAuth;
     // [END declare_auth]
+    private boolean mIsBound;
+    private ParkingService mBoundService;
+    // [END on_start_check_user]
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // This is called when the connection with the service has been
+            // established, giving us the service object we can use to
+            // interact with the service.  Because we have bound to a explicit
+            // service that we know is running in our own process, we can
+            // cast its IBinder to a concrete class and directly access it.
+            mBoundService = ((ParkingService.LocalBinder) service).getService();
+
+            // Tell the user about this for our demo.
+            Toast.makeText(MainActivity.this, "Local Service connected!",
+                    Toast.LENGTH_SHORT).show();
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            // This is called when the connection with the service has been
+            // unexpectedly disconnected -- that is, its process crashed.
+            // Because it is running in our same process, we should never
+            // see this happen.
+            mBoundService = null;
+            Toast.makeText(MainActivity.this, "Local service disconnected",
+                    Toast.LENGTH_SHORT).show();
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Log.d(TAG, "Setting application ID for Facebook");
+        FacebookSdk.setApplicationId(BuildConfig.FB_APP_ID);
+
         setContentView(R.layout.activity_main);
         Log.d(TAG, "onCreate");
 
@@ -41,7 +78,6 @@ public class MainActivity extends AppCompatActivity {
             startParkingService();
         }
     }
-    // [END on_start_check_user]
 
     private void showLoginChooser() {
         Log.d(TAG, "currentUser is null. Launching ChooserActivity");
@@ -50,10 +86,36 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
+    void doBindService() {
+        // Establish a connection with the service.  We use an explicit
+        // class name because we want a specific service implementation that
+        // we know will be running in our own process (and thus won't be
+        // supporting component replacement by other applications).
+        bindService(new Intent(MainActivity.this,
+                ParkingService.class), mConnection, Context.BIND_AUTO_CREATE);
+        mIsBound = true;
+    }
+
+    void doUnbindService() {
+        if (mIsBound) {
+            // Detach our existing connection.
+            unbindService(mConnection);
+            mIsBound = false;
+        }
+    }
+
+
     private void startParkingService() {
         Log.d(TAG, "startParkingService");
         // Start the Parking Service
-        Intent i = new Intent(getApplicationContext(), ParkingService.class);
-        getApplicationContext().startService(i);
+        doBindService();
+//        Intent i = new Intent(getApplicationContext(), ParkingService.class);
+//        getApplicationContext().startService(i);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        doUnbindService();
     }
 }

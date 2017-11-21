@@ -1,10 +1,13 @@
 package com.frankgh.wpiparking.auth;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.VisibleForTesting;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
+import com.frankgh.wpiparking.MainActivity;
 import com.frankgh.wpiparking.R;
 import com.google.firebase.auth.FirebaseAuth;
 
@@ -13,6 +16,8 @@ import com.google.firebase.auth.FirebaseAuth;
  */
 
 public class BaseActivity extends AppCompatActivity {
+
+    private static final String TAG = "BaseActivity";
 
     @VisibleForTesting
     public ProgressDialog mProgressDialog;
@@ -43,6 +48,12 @@ public class BaseActivity extends AppCompatActivity {
         if (mProgressDialog != null && mProgressDialog.isShowing()) {
             mProgressDialog.dismiss();
         }
+    }
+
+    protected void startMainActivity() {
+        Log.d(TAG, "startMainActivity");
+        startActivity(new Intent(this, MainActivity.class));
+        finish();
     }
 
     @Override
