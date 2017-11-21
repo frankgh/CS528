@@ -12,6 +12,9 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.LocationServices;
+
 /**
  * This is an example of implementing an application service that runs locally
  * in the same process as the application.  The {@link MainActivity}
@@ -36,6 +39,11 @@ public class ParkingService extends Service {
     // We use it on Notification start, and to cancel it.
     private int NOTIFICATION = R.string.local_service_started;
 
+    /**
+     * Provides access to the Geofencing API.
+     */
+    private GeofencingClient mGeofencingClient;
+
     @Override
     public void onCreate() {
         mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -46,6 +54,9 @@ public class ParkingService extends Service {
             mNotificationManager.createNotificationChannel(mChannel);
         }
 
+        mGeofencingClient = LocationServices.getGeofencingClient(this);
+
+
         // Display a notification about us starting.  We put an icon in the status bar.
         showNotification();
     }
@@ -53,6 +64,11 @@ public class ParkingService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("LocalService", "Received start id " + startId + ": " + intent);
+
+        if (!PermissionUtils.checkPermissions(this)) {
+            stopSelf();
+        }
+
         return START_NOT_STICKY;
     }
 
