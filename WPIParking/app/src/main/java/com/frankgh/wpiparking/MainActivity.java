@@ -15,20 +15,29 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.frankgh.wpiparking.auth.ChooserActivity;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private static final String TAG = "Main";
     private static final int REQUEST_PERMISSIONS_REQUEST_CODE = 118;
 
+    private GoogleMap mMap;
+    private SupportMapFragment mapFragment;
+
     // [START declare_auth]
     private FirebaseAuth mAuth;
     // [END declare_auth]
+
     private boolean mIsBound;
     private ParkingService mBoundService;
-    // [END on_start_check_user]
+
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
             // This is called when the connection with the service has been
@@ -63,6 +72,20 @@ public class MainActivity extends AppCompatActivity {
         // [START initialize_auth]
         mAuth = FirebaseAuth.getInstance();
         // [END initialize_auth]
+
+        // [START initialize_map]
+        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+        // [END initialize_map]
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        Log.d(TAG, "onMapReady()");
+        mMap = googleMap;
+        float zoom = 14f;
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(Constants.WPI_AREA_LANDMARKS.get(Constants.LATLNG_WPI), zoom);
+        mMap.animateCamera(cameraUpdate);
     }
 
     // [START on_start_check_user]
