@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.1'
+    buildToolsVersion '26.0.2'
 
     defaultConfig {
         applicationId "com.wpics528.android.criminalintent"
@@ -13,6 +13,9 @@ android {
     }
     buildTypes {
 
+    }
+    aaptOptions {
+        cruncherEnabled = false
     }
 }
 
@@ -29,6 +32,10 @@ dependencies {
     compile "com.android.support:support-v13:${supportLibVersion}"
     compile "com.android.support:design:${supportLibVersion}"
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'com.jakewharton:butterknife:8.8.1'
+    compile 'com.google.android.gms:play-services:7.8+'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.google.android.gms:play-services:7.8+'
 }

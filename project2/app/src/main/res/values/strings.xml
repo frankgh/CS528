@@ -34,4 +34,6 @@
     <string name="case_unsolved">Case not solved</string>
     <string name="gallery_count_one">1 Photo</string>
     <string name="gallery_count">%1$d Photos</string>
+    <string name="photos_string">%1$d Photos</string>
+    <string name="camera_string">Camera</string>
 </resources>

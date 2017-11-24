@@ -6,6 +6,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -18,6 +23,7 @@ import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +33,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.face.Face;
+import com.google.android.gms.vision.face.FaceDetector;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
@@ -35,7 +47,23 @@ import java.util.UUID;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
-
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
+import android.os.Bundle;
+import android.util.SparseArray;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import com.google.android.gms.vision.Frame;
+import com.google.android.gms.vision.face.Face;
+import com.google.android.gms.vision.face.FaceDetector;
 public class CrimeFragment extends Fragment {
 
     private static final String TAG = "CrimeFragment";
@@ -80,6 +108,7 @@ public class CrimeFragment extends Fragment {
     ImageButton mPhotoButton;
     @BindView(R.id.crime_photo)
     ImageView mPhotoView;
+
 
     private Crime mCrime;
     private File mPhotoFile;
@@ -188,7 +217,6 @@ public class CrimeFragment extends Fragment {
         }
 
         final Intent captureImageCheck = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
         boolean canTakePhoto = captureImageCheck.resolveActivity(packageManager) != null;
         mPhotoButton.setEnabled(canTakePhoto);
 
@@ -217,23 +245,15 @@ public class CrimeFragment extends Fragment {
                 }
             });
         }
-        updatePhotoView();
 
+        updatePhotoView();
         updateGallery();
         mViewGalleryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mCrime.getPhotoCount() < 16) {
-                    Intent intent = new Intent(getActivity(), CrimeImageGalleryActivity.class);
-                    intent.putExtra(CrimePagerActivity.EXTRA_CRIME_ID, mCrime.getId());
-                    startActivity(intent);
-                } else {
-                    Intent intent = new Intent(getActivity(), CrimeImageGalleryActivity16.class);
-                    intent.putExtra(CrimePagerActivity.EXTRA_CRIME_ID, mCrime.getId());
-                    startActivity(intent);
-                }
-
-
+                Intent intent = new Intent(getActivity(), CrimeImageGalleryActivity.class);
+                intent.putExtra(CrimePagerActivity.EXTRA_CRIME_ID, mCrime.getId());
+                startActivity(intent);
             }
         });
 
@@ -244,6 +264,7 @@ public class CrimeFragment extends Fragment {
             public void onClick(View view) {
                 mCrime.setFaceDetectionEnabled(!mCrime.isFaceDetectionEnabled());
                 updateFaceDetection();
+                updatePhotoView();
             }
         });
 
@@ -336,6 +357,7 @@ public class CrimeFragment extends Fragment {
         if (mCrime.isFaceDetectionEnabled()) {
             mEnableFaceDetectionButton.setImageResource(R.drawable.ic_tag_faces);
             mEnableFaceDetectionEditText.setText(R.string.face_detection_enabled);
+
         } else {
             mEnableFaceDetectionButton.setImageResource(R.drawable.ic_tag_faces_off);
             mEnableFaceDetectionEditText.setText(R.string.face_detection_disabled);
@@ -366,9 +388,58 @@ public class CrimeFragment extends Fragment {
         if (mPhotoFile == null || !mPhotoFile.exists()) {
             mPhotoView.setImageDrawable(null);
         } else {
-            Bitmap bitmap = PictureUtils.getScaledBitmap(
-                    mPhotoFile.getPath(), getActivity());
-            mPhotoView.setImageBitmap(bitmap);
+            Picasso
+                    .with(getActivity())
+                    .load(mPhotoFile)
+                    .fit()
+                    .centerCrop()
+                    .into(mPhotoView, new Callback() {
+                        @Override
+                        public void onSuccess() {
+
+                            if (!mCrime.isFaceDetectionEnabled()){
+                                return;
+                            }
+
+                            Bitmap myBitmap = ((BitmapDrawable) mPhotoView.getDrawable()).getBitmap();
+
+                            Paint myRectPaint = new Paint();
+                            myRectPaint.setStrokeWidth(5);
+                            myRectPaint.setColor(Color.RED);
+                            myRectPaint.setStyle(Paint.Style.STROKE);
+
+                            Bitmap tempBitmap = Bitmap.createBitmap(myBitmap.getWidth(), myBitmap.getHeight(), Bitmap.Config.RGB_565);
+                            Canvas tempCanvas = new Canvas(tempBitmap);
+                            tempCanvas.drawBitmap(myBitmap, 0, 0, null);
+
+                            FaceDetector faceDetector = new
+                                    FaceDetector.Builder(getContext()).setTrackingEnabled(false)
+                                    .build();
+                            if (!faceDetector.isOperational()) {
+
+                                return;
+                            }
+
+                            Frame frame = new Frame.Builder().setBitmap(myBitmap).build();
+                            SparseArray<Face> faces = faceDetector.detect(frame);
+
+                            if (faces.size() == 0) return;
+
+                            for (int i = 0; i < faces.size(); i++) {
+                                Face thisFace = faces.valueAt(i);
+                                float x1 = thisFace.getPosition().x;
+                                float y1 = thisFace.getPosition().y;
+                                float x2 = x1 + thisFace.getWidth();
+                                float y2 = y1 + thisFace.getHeight();
+                                tempCanvas.drawRoundRect(new RectF(x1, y1, x2, y2), 2, 2, myRectPaint);
+                            }
+                            mPhotoView.setImageDrawable(new BitmapDrawable(getResources(), tempBitmap));
+                        }
+
+                        @Override
+                        public void onError() {
+                        }
+                    });
         }
     }
 
