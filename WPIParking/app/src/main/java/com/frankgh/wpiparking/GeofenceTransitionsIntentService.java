@@ -51,6 +51,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
      */
     @Override
     protected void onHandleIntent(Intent intent) {
+        Log.d(TAG, "onHandleIntent invoked");
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         if (geofencingEvent.hasError()) {
             String errorMessage = GeofenceErrorMessages.getErrorString(this,
@@ -92,7 +93,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
     private String getGeofenceTransitionDetails(
             int geofenceTransition,
             List<Geofence> triggeringGeofences) {
-
+        Log.d(TAG, "getGeofenceTransitionDetails invoked");
         String geofenceTransitionString = getTransitionString(geofenceTransition);
 
         // Get the Ids of each geofence that was triggered.
@@ -110,6 +111,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
      * If the user clicks the notification, control goes to the MainActivity.
      */
     private void sendNotification(String notificationDetails) {
+        Log.d(TAG, "sendNotification invoked");
         // Create an explicit content Intent that starts the main Activity.
         Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
 
