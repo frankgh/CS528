@@ -1,0 +1,10 @@
+// These rules grant access to a node matching the authenticated
+// user's ID from the Firebase auth token
+{
+  "rules": {
+    "lots": {
+      ".read": "auth != null",
+      ".write": false
+    }
+  }
+}
