@@ -20,5 +20,15 @@
       "longitude": -71.808613,
       "radius": 40
     }
+     "dean": {
+      "capacity": 49,
+      "threshold": 5,
+      "used": 0,
+      "displayName": "Dean Lot",
+      "address": "Dean Lot, Dean St, Worcester, MA 01609",
+      "latitude": 53.2734,
+      "longitude": -7.778320310000026,
+      "radius": 40
+    }
   }
 }
