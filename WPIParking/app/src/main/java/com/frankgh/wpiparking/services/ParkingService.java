@@ -1,4 +1,4 @@
-package com.frankgh.wpiparking;
+package com.frankgh.wpiparking.services;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -12,6 +12,8 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.frankgh.wpiparking.MainActivity;
+import com.frankgh.wpiparking.R;
 import com.google.android.gms.location.Geofence;
 
 import java.util.ArrayList;
