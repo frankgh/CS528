@@ -6,4 +6,8 @@
 
     <color name="grey_100">#F5F5F5</color>
     <color name="grey_300">#E0E0E0</color>
+
+    <color name="light_blue">#4285F4</color>
+
+    <color name="grey_100_transparent">#b4f5f5f5</color>
 </resources>
