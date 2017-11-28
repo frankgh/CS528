@@ -46,6 +46,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationCallback;
@@ -174,13 +175,15 @@ public class MainActivity extends AppCompatActivity implements
      */
     private Map<String, Marker> mMarkerMap;
     /**
-     * Used when requesting to add or remove geofences.
-     */
-    private PendingIntent mGeofencePendingIntent;
-    /**
      * Provides access to the Geofencing API.
      */
     private GeofencingClient mGeofencingClient;
+    /**
+     * The list of geofences used in this sample.
+     */
+    private List<Geofence> mGeofenceList;
+    private List<ParkingLot> mLotsForGeofenceList;
+    private List<String> mOutdatedGeofenceList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -244,7 +247,6 @@ public class MainActivity extends AppCompatActivity implements
                 requestPermissions();
             } else {
                 getLastLocation();
-                performPendingGeofenceTask();
             }
         }
     }
@@ -254,16 +256,9 @@ public class MainActivity extends AppCompatActivity implements
         super.onResume();
 
         if (checkPermissions()) {
+            configureDataAdapter();
             startLocationUpdates();
-
-            if (mAdapter == null) {
-                // Listen for Firebase DB parking lot events
-                mAdapter = new ParkingLotAdapter(this, mParkingLotsReference).
-                        registerCallback(this);
-                mParkingLotsRecycler.setAdapter(mAdapter);
-            } else {
-                mAdapter.startListener();
-            }
+            performPendingGeofenceTask();
         }
     }
 
@@ -273,12 +268,6 @@ public class MainActivity extends AppCompatActivity implements
 
         // Remove location updates to save battery.
         stopLocationUpdates();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
         // Clean up comments listener
         if (mAdapter != null) mAdapter.cleanupListener();
     }
@@ -336,10 +325,8 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onComplete(@NonNull Task<Void> task) {
         if (task.isSuccessful()) {
-            updateGeofencesAdded(true);
-            int messageId = getGeofencesAdded() ? R.string.geofences_added :
-                    R.string.geofences_removed;
-            Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show();
+            updateGeofencesAdded();
+            Toast.makeText(this, R.string.geofences_added, Toast.LENGTH_SHORT).show();
         } else {
             // Get the status code for the error and log it using a user-friendly message.
             String errorMessage = GeofenceErrorMessages.getErrorString(this, task.getException());
@@ -351,7 +338,7 @@ public class MainActivity extends AppCompatActivity implements
      * Revoke access to Google provider.
      */
     private void revokeAccess() {
-        mAdapter.cleanupListener();
+        if (mAdapter != null) mAdapter.cleanupListener();
         FirebaseUser user = mAuth.getCurrentUser();
         List<? extends UserInfo> data = user.getProviderData();
         for (UserInfo info : data) {
@@ -363,19 +350,25 @@ public class MainActivity extends AppCompatActivity implements
                 GoogleSignInOptions gso = new GoogleSignInOptions.Builder().build();
                 GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
                 // Google revoke access
-                mGoogleSignInClient.revokeAccess();
+                mGoogleSignInClient.revokeAccess().addOnCompleteListener(this,
+                        new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                showLoginChooser();
+                            }
+                        });
             }
         }
-        showLoginChooser();
     }
 
     /**
      * Log out from all providers.
      */
     private void logout() {
-        mAdapter.cleanupListener();
+        if (mAdapter != null) mAdapter.cleanupListener();
         FirebaseUser user = mAuth.getCurrentUser();
         List<? extends UserInfo> data = user.getProviderData();
+        boolean noWait = true;
         for (UserInfo info : data) {
             Log.d(TAG, "Logging out Provider: " + info.getProviderId() + " ....");
             if (FirebaseAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
@@ -384,12 +377,19 @@ public class MainActivity extends AppCompatActivity implements
             } else if (FacebookAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
                 LoginManager.getInstance().logOut();
             } else if (GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
+                noWait = false;
                 GoogleSignInOptions gso = new GoogleSignInOptions.Builder().build();
                 GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-                mGoogleSignInClient.signOut();
+                mGoogleSignInClient.signOut().addOnCompleteListener(this,
+                        new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                showLoginChooser();
+                            }
+                        });
             }
         }
-        showLoginChooser();
+        if (noWait) showLoginChooser();
     }
 
     /**
@@ -418,6 +418,20 @@ public class MainActivity extends AppCompatActivity implements
                 getString(mainTextStringId),
                 Snackbar.LENGTH_INDEFINITE)
                 .setAction(getString(actionStringId), listener).show();
+    }
+
+    /**
+     * Initialize the adapter for the firebase database.
+     */
+    private void configureDataAdapter() {
+        if (mAdapter == null) {
+            // Listen for Firebase DB parking lot events
+            mAdapter = new ParkingLotAdapter(this, mParkingLotsReference).
+                    registerCallback(this);
+            mParkingLotsRecycler.setAdapter(mAdapter);
+        } else {
+            mAdapter.startListener();
+        }
     }
 
     /**
@@ -726,29 +740,38 @@ public class MainActivity extends AppCompatActivity implements
      * Performs the geofencing task that was pending until location permission was granted.
      */
     private void performPendingGeofenceTask() {
-        if (!getGeofencesAdded()) {
-            addGeofences();
-        }
-    }
-
-    /**
-     * Returns true if geofences were added, otherwise false.
-     */
-    private boolean getGeofencesAdded() {
-        return PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
-                Constants.GEOFENCES_ADDED_KEY, false);
+        populateGeofenceList();
+        removeOutdatedGeofences();
+        addGeofences();
     }
 
     /**
      * Stores whether geofences were added ore removed in {@link SharedPreferences};
-     *
-     * @param added Whether geofences were added or removed.
      */
-    private void updateGeofencesAdded(boolean added) {
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .edit()
-                .putBoolean(Constants.GEOFENCES_ADDED_KEY, added)
-                .apply();
+    private void updateGeofencesAdded() {
+        if (mLotsForGeofenceList != null) {
+            for (ParkingLot lot : mLotsForGeofenceList) {
+                PreferenceManager.getDefaultSharedPreferences(this)
+                        .edit()
+                        .putInt(Constants.GEOFENCES_ADDED_KEY + "." + lot.getName(), lot.getVersion())
+                        .apply();
+            }
+        }
+    }
+
+    /**
+     * Removes geofences that have been updated in the database. This method should be called
+     * after the user has granted the location permission.
+     */
+    private void removeOutdatedGeofences() {
+        if (!checkPermissions()) {
+            showSnackbar(getString(R.string.insufficient_permissions));
+            return;
+        }
+
+        if (mOutdatedGeofenceList != null && mOutdatedGeofenceList.size() > 0) {
+            mGeofencingClient.removeGeofences(mOutdatedGeofenceList);
+        }
     }
 
     /**
@@ -762,8 +785,71 @@ public class MainActivity extends AppCompatActivity implements
             return;
         }
 
-        mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
-                .addOnCompleteListener(this);
+        if (mGeofenceList != null && mGeofenceList.size() > 0) {
+            mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+                    .addOnCompleteListener(this);
+        }
+    }
+
+    /**
+     * This sample hard codes geofence data. A real app might dynamically create geofences based on
+     * the user's location.
+     */
+    private void populateGeofenceList() {
+        if (mAdapter == null)
+            return;
+        List<ParkingLot> parkingLotList = mAdapter.getParkingLots();
+        if (parkingLotList == null || parkingLotList.size() == 0)
+            return;
+
+        List<Geofence> geofenceList = new ArrayList<>();
+        List<ParkingLot> lotsForGeofenceList = new ArrayList<>();
+        List<String> outdatedGeofenceList = new ArrayList<>();
+        for (ParkingLot lot : parkingLotList) {
+            int version = PreferenceManager.getDefaultSharedPreferences(this).getInt(
+                    Constants.GEOFENCES_ADDED_KEY + "." + lot.getName(), -1);
+            if (version == -1) {
+                lotsForGeofenceList.add(lot);
+                geofenceList.add(new Geofence.Builder()
+                        // Set the request ID of the geofence. This is a string to identify this
+                        // geofence.
+                        .setRequestId(lot.getName())
+
+                        // Set the circular region of this geofence.
+                        .setCircularRegion(
+                                lot.getLatitude(),
+                                lot.getLongitude(),
+                                lot.getRadius()
+                        )
+
+                        // Set the expiration duration of the geofence. This geofence gets automatically
+                        // removed after this period of time.
+                        .setExpirationDuration(Geofence.NEVER_EXPIRE)
+
+                        // Set the transition types of interest. Alerts are only generated for these
+                        // transition. We track entry and exit transitions in this sample.
+                        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+                                Geofence.GEOFENCE_TRANSITION_EXIT)
+
+                        // Create the geofence.
+                        .build());
+            } else if (version < lot.getVersion()) {
+                outdatedGeofenceList.add(lot.getName());
+                removeGeofencePreference(lot);
+            }
+        }
+        mGeofenceList = geofenceList;
+        mLotsForGeofenceList = lotsForGeofenceList;
+        mOutdatedGeofenceList = outdatedGeofenceList;
+    }
+
+    /**
+     * Remove the preference for a given parking lot.
+     */
+    private void removeGeofencePreference(ParkingLot lot) {
+        PreferenceManager.getDefaultSharedPreferences(this).edit()
+                .remove(Constants.GEOFENCES_ADDED_KEY + "." + lot.getName())
+                .apply();
     }
 
     /**
@@ -771,7 +857,6 @@ public class MainActivity extends AppCompatActivity implements
      * Also specifies how the geofence notifications are initially triggered.
      */
     private GeofencingRequest getGeofencingRequest() {
-        Log.d(TAG, "getGeofencingRequest invoked");
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
 
         // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
@@ -795,10 +880,6 @@ public class MainActivity extends AppCompatActivity implements
      */
     private PendingIntent getGeofencePendingIntent() {
         Log.d(TAG, "getGeofencePendingIntent invoked");
-        // Reuse the PendingIntent if we already have it.
-        if (mGeofencePendingIntent != null) {
-            return mGeofencePendingIntent;
-        }
         Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling addGeofences().
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -818,6 +899,7 @@ public class MainActivity extends AppCompatActivity implements
                 Log.i(TAG, "User interaction was cancelled.");
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.i(TAG, "Permission granted.");
+                configureDataAdapter();
                 getLastLocation();
                 startLocationUpdates();
                 performPendingGeofenceTask();
@@ -997,14 +1079,18 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
 
-        public void cleanupListener() {
+        private void cleanupListener() {
             Log.d(TAG, "cleanupListener invoked");
             if (mChildEventListener != null) {
                 mDatabaseReference.removeEventListener(mChildEventListener);
             }
         }
 
-        public ParkingLotAdapter registerCallback(@NonNull ParkingLotCallbacks callback) {
+        private List<ParkingLot> getParkingLots() {
+            return mParkingLots;
+        }
+
+        private ParkingLotAdapter registerCallback(@NonNull ParkingLotCallbacks callback) {
             mCallbacks.add(callback);
             return this;
         }
