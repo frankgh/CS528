@@ -16,11 +16,11 @@ public class RestartService extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.v(TAG, "Alarm for RestartService...");
-        if (!ApplicationUtils.isServiceRunning(context, ParkingService.class.getName())) {
-            Log.d(TAG, "Service is NOT running...");
-            context.startService(new Intent(context, ParkingService.class));
-        } else {
-            Log.d(TAG, "Service is running...");
-        }
+//        if (!ApplicationUtils.isServiceRunning(context, ParkingService.class.getName())) {
+//            Log.d(TAG, "Service is NOT running...");
+//            context.startService(new Intent(context, ParkingService.class));
+//        } else {
+//            Log.d(TAG, "Service is running...");
+//        }
     }
 }
