@@ -20,7 +20,7 @@
       "longitude": -71.808613,
       "radius": 40
     }
-     "dean ": {
+     "dean": {
       "capacity": 49,
       "threshold": 5,
       "used": 0,
@@ -29,6 +29,6 @@
       "latitude": 53.2734,
       "longitude": -7.778320310000026,
       "radius": 40
-}
+    }
   }
 }
