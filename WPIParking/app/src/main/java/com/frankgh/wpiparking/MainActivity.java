@@ -44,6 +44,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -433,29 +434,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void onParkingLotAdded(ParkingLot lot) {
-        if (mMap == null || mMarkerMap.containsKey(lot.getName()))
+        if (mMap == null)
             return;
 
         LatLng latLng = new LatLng(lot.getLatitude(), lot.getLongitude());
         synchronized (mMarkerMap) {
-            if (!mMarkerMap.containsKey(lot.getName())) {
+            if (mMarkerMap.containsKey(lot.getName())) {
+                Marker m = mMarkerMap.remove(lot.getName());
+                Circle c = (Circle) m.getTag();
 
-                // Define marker options
-                MarkerOptions markerOptions = new MarkerOptions()
-                        .position(latLng)
-                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
-                        .title(lot.getDisplayName());
-                Marker marker = mMap.addMarker(markerOptions);
-                mMarkerMap.put(lot.getName(), marker);
+                c.remove();
+                m.remove();
             }
-        }
 
-        CircleOptions circleOptions = new CircleOptions()
-                .center(latLng)
-                .strokeColor(Color.argb(50, 70, 70, 70))
-                .fillColor(Color.argb(100, 150, 150, 150))
-                .radius(lot.getRadius());
-        mMap.addCircle(circleOptions);
+            // Define marker options
+            MarkerOptions markerOptions = new MarkerOptions()
+                    .position(latLng)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+                    .title(lot.getDisplayName());
+            Marker marker = mMap.addMarker(markerOptions);
+            mMarkerMap.put(lot.getName(), marker);
+
+            CircleOptions circleOptions = new CircleOptions()
+                    .center(latLng)
+                    .strokeColor(Color.argb(50, 70, 70, 70))
+                    .fillColor(Color.argb(100, 150, 150, 150))
+                    .radius(lot.getRadius());
+            Circle circle = mMap.addCircle(circleOptions);
+            marker.setTag(circle);
+        }
     }
 
     private void showLoginChooser() {
@@ -619,6 +626,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if (index != null) {
                         mParkingLots.set(index, updatedLot);
                         notifyItemChanged(index);
+
+                        for (ParkingLotCallbacks callback : mCallbacks) {
+                            callback.onParkingLotAdded(updatedLot);
+                        }
                     } else {
                         Log.w(TAG, "onChildChanged:unknown_child:" + updatedLot.getName());
                     }
