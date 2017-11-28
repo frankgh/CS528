@@ -18,6 +18,9 @@ import java.util.Set;
 public class ActivityRecognitionIntentService extends IntentService {
 
     private static final String TAG = "ActivityRecognition";
+    private static String  oldActivityType;
+    public static  String currentActivity;
+    public static  String vehicleActivity = "vehicle";
     private static final String[] CODE_TEXT = {"IN_VEHICLE", "ON_BICYCLE", "ON_FOOT",
             "STILL", "UNKNOWN", "TILTING", "", "WALKING", "RUNNING"};
 
@@ -39,6 +42,39 @@ public class ActivityRecognitionIntentService extends IntentService {
 
     private void handleDetectedActivities(ActivityRecognitionResult probableActivities) {
         DetectedActivity activity = probableActivities.getMostProbableActivity();
+
+        // ADDED CODE - WILL remove comments when implementing functionality
+        /*switch (activity.getType()) {
+
+            case DetectedActivity.IN_VEHICLE: {
+                currentActivity = vehicleActivity;
+                Log.e("ActivityRecogition", "In Vehicle: " + activity.getConfidence());
+                // CODE TO BE ADDED HERE
+                break;
+            }
+
+            case DetectedActivity.STILL: {
+
+                if (oldActivityType == vehicleActivity) {
+                    currentActivity = vehicleActivity;
+                    Log.e("ActivityRecogition", "Vehicle + Still: " + activity.getConfidence());
+                    // CODE TO BE ADDED HERE
+                    break;
+                }
+            }
+
+            case DetectedActivity.TILTING: {
+
+                if (oldActivityType == vehicleActivity) {
+                    currentActivity = "vehicle";
+                    Log.e("ActivityRecogition", "Vehicle + Tilting: " + activity.getConfidence());
+                    // CODE TO BE ADDED HERE
+                    break;
+                }
+            }
+        }
+        */
+        //CODE ABOVE added - will remove comments when implementing functionality
 
         if (activity.getType() == DetectedActivity.ON_FOOT ||
                 activity.getType() == DetectedActivity.TILTING) {
