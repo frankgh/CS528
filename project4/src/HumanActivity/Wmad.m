@@ -1,4 +1,4 @@
 function Y = Wmad(X)
-% Copyright (c) 2015, MathWorks, Inc.
+% Calculates the mean average difference
     Y = mad(X,0,2);
 end

@@ -19,17 +19,6 @@
       "latitude": 42.272521,
       "longitude": -71.808613,
       "radius": 40
-    },
-    "schussler ": {
-      "capacity": 23,
-      "threshold": 5,
-      "used": 0,
-      "displayName": "Schussler Lot",
-      "address": "35 Schussler Rd, Worcester, MA 01609",
-      "latitude": 42.2725517,
-      "longitude": -71.8090709,
-      "radius": 40
     }
-
   }
 }
