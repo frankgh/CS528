@@ -66,17 +66,6 @@
             android:stopWithTask="false" />
         <service android:name=".ActivityRecognitionIntentService" />
         <service android:name=".GeofenceTransitionsIntentService" />
-
-        <receiver
-            android:name=".RestartService"
-            android:enabled="true"
-            android:exported="true"
-            android:label="RestartServiceWhenStopped"
-            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
-            <intent-filter>
-                <action android:name="RestartService" />
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>
