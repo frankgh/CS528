@@ -29,6 +29,8 @@ import java.util.HashMap;
 
 final class Constants {
 
+    public static final String LATLNG_WPI = "WPI";
+
     static final float GEOFENCE_RADIUS_IN_METERS = 1609; // 1 mile, 1.6 km
     /**
      * Map for storing information about airports in the San Francisco bay area.
@@ -49,14 +51,7 @@ final class Constants {
 
     static {
         // Worcester Polytechnic Institute.
-        WPI_AREA_LANDMARKS.put("WPI", new LatLng(42.274641, -71.80634));
-
-        // Boynton Lot.
-
-        // Hackfeld Lot.
-        WPI_AREA_LANDMARKS.put("WPI_Hackfeld", new LatLng(42.272997, -71.812771));
-
-        // West Lot.
+        WPI_AREA_LANDMARKS.put(LATLNG_WPI, new LatLng(42.274641, -71.80634));
     }
 
     private Constants() {
