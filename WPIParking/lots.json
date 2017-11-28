@@ -1,0 +1,24 @@
+{
+  "lots": {
+    "hackfeld": {
+      "capacity": 30,
+      "threshold": 5,
+      "used": 0,
+      "displayName": "Hackfeld Lot",
+      "address": "43 Hackfeld Rd, Worcester, Massachusetts, 01609",
+      "latitude": 42.273024,
+      "longitude": -71.81279,
+      "radius": 40
+    },
+    "west": {
+      "capacity": 30,
+      "threshold": 5,
+      "used": 0,
+      "displayName": "West Lot",
+      "address": "162 West St, Worcester, Massachusetts, 01609",
+      "latitude": 42.272521,
+      "longitude": -71.808613,
+      "radius": 40
+    }
+  }
+}
