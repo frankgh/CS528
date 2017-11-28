@@ -8,6 +8,7 @@
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
 
     <application
+        android:name=".WPIParkingApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -31,7 +32,10 @@
             android:value="@string/facebook_app_id"
             tools:replace="android:value" />
 
-        <activity android:name=".MainActivity">
+        <activity
+            android:name=".MainActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -62,6 +66,17 @@
             android:stopWithTask="false" />
         <service android:name=".ActivityRecognitionIntentService" />
         <service android:name=".GeofenceTransitionsIntentService" />
+
+        <receiver
+            android:name=".RestartService"
+            android:enabled="true"
+            android:exported="true"
+            android:label="RestartServiceWhenStopped"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="RestartService" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>
