@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,6 +14,7 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -457,8 +457,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             CircleOptions circleOptions = new CircleOptions()
                     .center(latLng)
-                    .strokeColor(Color.argb(50, 70, 70, 70))
-                    .fillColor(Color.argb(100, 150, 150, 150))
+                    .strokeColor(ContextCompat.getColor(this, R.color.geofence_stroke_color)) //Color.argb(50, 70, 70, 70))
+                    .fillColor(ContextCompat.getColor(this, R.color.geofence_fill_color)) //Color.argb(100, 150, 150, 150))
                     .radius(lot.getRadius());
             Circle circle = mMap.addCircle(circleOptions);
             marker.setTag(circle);
