@@ -2,15 +2,18 @@ package com.frankgh.wpiparking;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -43,6 +46,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.GeofencingClient;
+import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -89,7 +94,8 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity implements
         OnMapReadyCallback,
         ParkingLotCallbacks,
-        NavigationView.OnNavigationItemSelectedListener {
+        NavigationView.OnNavigationItemSelectedListener,
+        OnCompleteListener<Void> {
 
     private static final String TAG = "Main";
 
@@ -114,72 +120,67 @@ public class MainActivity extends AppCompatActivity implements
      */
     private static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS =
             UPDATE_INTERVAL_IN_MILLISECONDS / 2;
-
     /**
      * Represents a geographical location.
      */
     protected Location mCurrentLocation;
-
     /**
      * Callback for Location events.
      */
     private LocationCallback mLocationCallback;
-
     /**
      * The Google Maps map instance
      */
     private GoogleMap mMap;
-
     /**
      * Provides the authenticated user for Firebase.
      */
     private FirebaseAuth mAuth;
-
     /**
      * The marker of the current location on the map.
      */
     private Marker mLocationMarker;
-
     /**
      * Stores parameters for requests to the FusedLocationProviderApi.
      */
     private LocationRequest mLocationRequest;
-
     /**
      * Stores the types of location services the client is interested in using. Used for checking
      * settings to determine if the device has optimal location settings.
      */
     private LocationSettingsRequest mLocationSettingsRequest;
-
     /**
      * Provides the entry point to the Fused Location Provider API.
      */
     private FusedLocationProviderClient mFusedLocationClient;
-
     /**
      * Provides access to the Location Settings API.
      */
     private SettingsClient mSettingsClient;
-
     /**
      * The Adapter for the Parking Lots in the Firebase database.
      */
     private ParkingLotAdapter mAdapter;
-
     /**
      * The Firebase database reference for parking lots.
      */
     private DatabaseReference mParkingLotsReference;
-
     /**
      * The View for the list of parking lots.
      */
     private RecyclerView mParkingLotsRecycler;
-
     /**
      * Keeps a HashMap of markers for the parking lot.
      */
     private Map<String, Marker> mMarkerMap;
+    /**
+     * Used when requesting to add or remove geofences.
+     */
+    private PendingIntent mGeofencePendingIntent;
+    /**
+     * Provides access to the Geofencing API.
+     */
+    private GeofencingClient mGeofencingClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -228,6 +229,7 @@ public class MainActivity extends AppCompatActivity implements
         buildLocationSettingsRequest();
 
         mParkingLotsRecycler.setLayoutManager(new LinearLayoutManager(this));
+        mGeofencingClient = LocationServices.getGeofencingClient(this);
     }
 
     @Override
@@ -238,11 +240,11 @@ public class MainActivity extends AppCompatActivity implements
         if (mAuth.getCurrentUser() == null) {
             showLoginChooser();
         } else {
-            if (!ApplicationUtils.checkPermissions(this)) {
+            if (!checkPermissions()) {
                 requestPermissions();
             } else {
                 getLastLocation();
-//                startParkingService();
+                performPendingGeofenceTask();
             }
         }
     }
@@ -251,7 +253,7 @@ public class MainActivity extends AppCompatActivity implements
     protected void onResume() {
         super.onResume();
 
-        if (ApplicationUtils.checkPermissions(this)) {
+        if (checkPermissions()) {
             startLocationUpdates();
 
             if (mAdapter == null) {
@@ -319,6 +321,32 @@ public class MainActivity extends AppCompatActivity implements
         return true;
     }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        Log.d(TAG, "onMapReady()");
+        mMap = googleMap;
+        zoomToLocation(Constants.WPI_AREA_LANDMARKS.get(Constants.LATLNG_WPI), 14f);
+    }
+
+    /**
+     * Runs when the result of calling {@link #addGeofences()} is available.
+     *
+     * @param task the resulting Task, containing either a result or error.
+     */
+    @Override
+    public void onComplete(@NonNull Task<Void> task) {
+        if (task.isSuccessful()) {
+            updateGeofencesAdded(true);
+            int messageId = getGeofencesAdded() ? R.string.geofences_added :
+                    R.string.geofences_removed;
+            Toast.makeText(this, getString(messageId), Toast.LENGTH_SHORT).show();
+        } else {
+            // Get the status code for the error and log it using a user-friendly message.
+            String errorMessage = GeofenceErrorMessages.getErrorString(this, task.getException());
+            Log.w(TAG, errorMessage);
+        }
+    }
+
     /**
      * Revoke access to Google provider.
      */
@@ -362,13 +390,6 @@ public class MainActivity extends AppCompatActivity implements
             }
         }
         showLoginChooser();
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        Log.d(TAG, "onMapReady()");
-        mMap = googleMap;
-        zoomToLocation(Constants.WPI_AREA_LANDMARKS.get(Constants.LATLNG_WPI), 14f);
     }
 
     /**
@@ -661,6 +682,16 @@ public class MainActivity extends AppCompatActivity implements
         mMap.animateCamera(cameraUpdate);
     }
 
+    /**
+     * Return the current state of the permissions needed.
+     */
+    private boolean checkPermissions() {
+        Log.d(TAG, "checkPermission");
+        int permissionState = ActivityCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION);
+        return permissionState == PackageManager.PERMISSION_GRANTED;
+    }
+
     private void requestPermissions() {
         boolean shouldProvideRationale =
                 ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -692,6 +723,88 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /**
+     * Performs the geofencing task that was pending until location permission was granted.
+     */
+    private void performPendingGeofenceTask() {
+        if (!getGeofencesAdded()) {
+            addGeofences();
+        }
+    }
+
+    /**
+     * Returns true if geofences were added, otherwise false.
+     */
+    private boolean getGeofencesAdded() {
+        return PreferenceManager.getDefaultSharedPreferences(this).getBoolean(
+                Constants.GEOFENCES_ADDED_KEY, false);
+    }
+
+    /**
+     * Stores whether geofences were added ore removed in {@link SharedPreferences};
+     *
+     * @param added Whether geofences were added or removed.
+     */
+    private void updateGeofencesAdded(boolean added) {
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .edit()
+                .putBoolean(Constants.GEOFENCES_ADDED_KEY, added)
+                .apply();
+    }
+
+    /**
+     * Adds geofences. This method should be called after the user has granted the location
+     * permission.
+     */
+    @SuppressWarnings("MissingPermission")
+    private void addGeofences() {
+        if (!checkPermissions()) {
+            showSnackbar(getString(R.string.insufficient_permissions));
+            return;
+        }
+
+        mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+                .addOnCompleteListener(this);
+    }
+
+    /**
+     * Builds and returns a GeofencingRequest. Specifies the list of geofences to be monitored.
+     * Also specifies how the geofence notifications are initially triggered.
+     */
+    private GeofencingRequest getGeofencingRequest() {
+        Log.d(TAG, "getGeofencingRequest invoked");
+        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+
+        // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
+        // GEOFENCE_TRANSITION_ENTER notification when the geofence is added and if the device
+        // is already inside that geofence.
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+
+        // Add the geofences to be monitored by geofencing service.
+        builder.addGeofences(mGeofenceList);
+
+        // Return a GeofencingRequest.
+        return builder.build();
+    }
+
+    /**
+     * Gets a PendingIntent to send with the request to add or remove Geofences. Location Services
+     * issues the Intent inside this PendingIntent whenever a geofence transition occurs for the
+     * current list of geofences.
+     *
+     * @return A PendingIntent for the IntentService that handles geofence transitions.
+     */
+    private PendingIntent getGeofencePendingIntent() {
+        Log.d(TAG, "getGeofencePendingIntent invoked");
+        // Reuse the PendingIntent if we already have it.
+        if (mGeofencePendingIntent != null) {
+            return mGeofencePendingIntent;
+        }
+        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling addGeofences().
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    /**
      * Callback received when a permissions request has been completed.
      */
     @Override
@@ -705,9 +818,9 @@ public class MainActivity extends AppCompatActivity implements
                 Log.i(TAG, "User interaction was cancelled.");
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.i(TAG, "Permission granted.");
-//                startParkingService();
                 getLastLocation();
                 startLocationUpdates();
+                performPendingGeofenceTask();
             } else {
                 // Permission denied.
 
