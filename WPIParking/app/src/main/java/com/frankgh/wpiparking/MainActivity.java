@@ -40,6 +40,8 @@ import android.widget.Toast;
 import com.facebook.login.LoginManager;
 import com.frankgh.wpiparking.auth.ChooserActivity;
 import com.frankgh.wpiparking.models.ParkingLot;
+import com.frankgh.wpiparking.services.GeofenceErrorMessages;
+import com.frankgh.wpiparking.services.GeofenceTransitionsIntentService;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
