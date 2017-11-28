@@ -13,20 +13,33 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.login.LoginManager;
 import com.frankgh.wpiparking.auth.ChooserActivity;
 import com.frankgh.wpiparking.models.ParkingLot;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -53,19 +66,30 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FacebookAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthProvider;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.makeramen.roundedimageview.RoundedTransformationBuilder;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Transformation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, ParkingLotCallbacks {
+public class MainActivity extends AppCompatActivity implements
+        OnMapReadyCallback,
+        ParkingLotCallbacks,
+        NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "Main";
 
@@ -169,6 +193,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
 
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close) {
+            /** Called when a drawer has settled in a completely open state. */
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                updateNavigationUI();
+            }
+        };
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
         // [START initialize_map]
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -238,6 +279,89 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         // Clean up comments listener
         if (mAdapter != null) mAdapter.cleanupListener();
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        switch (item.getItemId()) {
+            case R.id.nav_camera:
+                // Handle the camera action
+                break;
+            case R.id.nav_gallery:
+
+                break;
+            case R.id.nav_slideshow:
+
+                break;
+            case R.id.nav_manage:
+
+                break;
+            case R.id.nav_disconnect:
+                revokeAccess();
+                break;
+            case R.id.nav_logout:
+                logout();
+                break;
+        }
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    /**
+     * Revoke access to Google provider.
+     */
+    private void revokeAccess() {
+        mAdapter.cleanupListener();
+        FirebaseUser user = mAuth.getCurrentUser();
+        List<? extends UserInfo> data = user.getProviderData();
+        for (UserInfo info : data) {
+            Log.d(TAG, "Logging out Provider: " + info.getProviderId() + " ....");
+            if (FirebaseAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
+                // Sign out from Firebase
+                mAuth.signOut();
+            } else if (GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
+                GoogleSignInOptions gso = new GoogleSignInOptions.Builder().build();
+                GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+                // Google revoke access
+                mGoogleSignInClient.revokeAccess();
+            }
+        }
+        showLoginChooser();
+    }
+
+    /**
+     * Log out from all providers.
+     */
+    private void logout() {
+        mAdapter.cleanupListener();
+        FirebaseUser user = mAuth.getCurrentUser();
+        List<? extends UserInfo> data = user.getProviderData();
+        for (UserInfo info : data) {
+            Log.d(TAG, "Logging out Provider: " + info.getProviderId() + " ....");
+            if (FirebaseAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
+                // Sign out from Firebase
+                mAuth.signOut();
+            } else if (FacebookAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
+                LoginManager.getInstance().logOut();
+            } else if (GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
+                GoogleSignInOptions gso = new GoogleSignInOptions.Builder().build();
+                GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
+                mGoogleSignInClient.signOut();
+            }
+        }
+        showLoginChooser();
     }
 
     @Override
@@ -328,6 +452,60 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     .position(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()))
                     .title(mCurrentLocation.getLatitude() + ", " + mCurrentLocation.getLongitude());
             mLocationMarker = mMap.addMarker(markerOptions);
+        }
+    }
+
+    /**
+     * Sets the value of the UI fields for the user account on the Navigation Drawer.
+     */
+    private void updateNavigationUI() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            TextView displayNameTextView = findViewById(R.id.display_name_textview);
+            if (displayNameTextView.getTag() != null)
+                return;
+
+            TextView emailTextView = findViewById(R.id.email_textview);
+            List<? extends UserInfo> data = user.getProviderData();
+            String displayName = null, email = null;
+            Uri photoUrl = null;
+            boolean hasGoogleProvider = false;
+            for (UserInfo info : data) {
+                displayName = TextUtils.isEmpty(displayName) ? info.getDisplayName() : displayName;
+                email = TextUtils.isEmpty(email) ? info.getEmail() : email;
+                photoUrl = photoUrl == null ? info.getPhotoUrl() : photoUrl;
+                hasGoogleProvider = hasGoogleProvider || GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId());
+            }
+
+            displayNameTextView.setText(displayName);
+            displayNameTextView.setTag(true);
+            if (TextUtils.isEmpty(email)) {
+                emailTextView.setVisibility(View.GONE);
+            } else {
+                emailTextView.setText(email);
+            }
+            if (photoUrl != null) {
+                Transformation transformation = new RoundedTransformationBuilder()
+                        .borderColor(Color.BLACK)
+                        .borderWidthDp(0)
+                        .cornerRadiusDp(25)
+                        .oval(true)
+                        .build();
+
+                ImageView imageView = findViewById(R.id.profile_imageview);
+                Picasso.with(this)
+                        .load(photoUrl)
+                        .fit()
+                        .centerInside()
+                        .transform(transformation)
+
+                        .into(imageView);
+            }
+            if (!hasGoogleProvider) {
+                // Hide disconnect menu item
+                NavigationView nv = findViewById(R.id.nav_view);
+                nv.getMenu().findItem(R.id.nav_disconnect).setVisible(false);
+            }
         }
     }
 
@@ -457,8 +635,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             CircleOptions circleOptions = new CircleOptions()
                     .center(latLng)
-                    .strokeColor(Color.argb(50, 70, 70, 70))
-                    .fillColor(Color.argb(100, 150, 150, 150))
+                    .strokeColor(ContextCompat.getColor(this, R.color.geofence_stroke_color)) //Color.argb(50, 70, 70, 70))
+                    .fillColor(ContextCompat.getColor(this, R.color.geofence_fill_color)) //Color.argb(100, 150, 150, 150))
                     .radius(lot.getRadius());
             Circle circle = mMap.addCircle(circleOptions);
             marker.setTag(circle);
