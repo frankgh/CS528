@@ -21,6 +21,7 @@ public class ParkingLot {
     private int threshold;
     private int used;
     private int radius;
+    private int version;
 
     public ParkingLot() {
         // Default constructor required for calls to DataSnapshot.getValue(ParkingLot.class)
@@ -37,6 +38,7 @@ public class ParkingLot {
         result.put("threshold", threshold);
         result.put("used", used);
         result.put("radius", radius);
+        result.put("version", version);
 
         return result;
     }
@@ -111,6 +113,14 @@ public class ParkingLot {
 
     public void setRadius(int radius) {
         this.radius = radius;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
     }
 
     @Exclude
