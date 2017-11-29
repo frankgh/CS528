@@ -1,4 +1,4 @@
-package com.frankgh.wpiparking;
+package com.frankgh.wpiparking.services;
 
 /**
  * @author Francisco Guerrero <email>me@frankgh.com</email> on 11/20/17.
@@ -16,6 +16,8 @@ import android.support.v4.app.TaskStackBuilder;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.frankgh.wpiparking.MainActivity;
+import com.frankgh.wpiparking.R;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 
@@ -59,6 +61,8 @@ public class GeofenceTransitionsIntentService extends IntentService {
             Log.e(TAG, errorMessage);
             return;
         }
+
+
 
         // Get the transition type.
         int geofenceTransition = geofencingEvent.getGeofenceTransition();

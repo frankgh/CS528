@@ -5,6 +5,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
 
     <application
@@ -62,21 +63,17 @@
             android:theme="@style/AppTheme.NoActionBar" />
 
         <service
-            android:name=".ParkingService"
+            android:name=".services.ParkingService"
             android:stopWithTask="false" />
-        <service android:name=".ActivityRecognitionIntentService" />
-        <service android:name=".GeofenceTransitionsIntentService" />
+        <service android:name=".services.ActivityRecognitionIntentService" />
+        <service android:name=".services.GeofenceTransitionsIntentService" />
 
-        <receiver
-            android:name=".RestartService"
-            android:enabled="true"
-            android:exported="true"
-            android:label="RestartServiceWhenStopped"
-            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+        <receiver android:name=".receivers.BootCompleteReceiver">
             <intent-filter>
-                <action android:name="RestartService" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
     </application>
 
 </manifest>
