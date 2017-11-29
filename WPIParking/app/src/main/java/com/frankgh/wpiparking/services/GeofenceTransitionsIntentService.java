@@ -18,7 +18,6 @@ import android.util.Log;
 
 import com.frankgh.wpiparking.MainActivity;
 import com.frankgh.wpiparking.R;
-import com.frankgh.wpiparking.services.GeofenceErrorMessages;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 
@@ -62,6 +61,8 @@ public class GeofenceTransitionsIntentService extends IntentService {
             Log.e(TAG, errorMessage);
             return;
         }
+
+
 
         // Get the transition type.
         int geofenceTransition = geofencingEvent.getGeofenceTransition();
