@@ -8,7 +8,8 @@
       "address": "43 Hackfeld Rd, Worcester, Massachusetts, 01609",
       "latitude": 42.273024,
       "longitude": -71.81279,
-      "radius": 40
+      "radius": 40,
+	  "version": 1
     },
     "west": {
       "capacity": 30,
@@ -18,17 +19,19 @@
       "address": "162 West St, Worcester, Massachusetts, 01609",
       "latitude": 42.272521,
       "longitude": -71.808613,
-      "radius": 40
-    }
+      "radius": 40,
+	  "version": 1
+    },
      "dean": {
       "capacity": 49,
       "threshold": 5,
       "used": 0,
       "displayName": "Dean Lot",
       "address": "Dean Lot, Dean St, Worcester, MA 01609",
-      "latitude": 53.2734,
-      "longitude": -7.778320310000026,
-      "radius": 40
+      "latitude": 42.2731788,
+      "longitude": -71.80464410000002,
+      "radius": 40,
+	  "version": 2
     }
   }
 }

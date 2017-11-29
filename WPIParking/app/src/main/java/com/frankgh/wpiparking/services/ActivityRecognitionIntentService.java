@@ -1,4 +1,4 @@
-package com.frankgh.wpiparking;
+package com.frankgh.wpiparking.services;
 
 import android.app.IntentService;
 import android.content.Intent;

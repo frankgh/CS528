@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.frankgh.wpiparking;
+package com.frankgh.wpiparking.services;
 
 /**
  * @author Francisco Guerrero <email>me@frankgh.com</email> on 11/20/17.
@@ -23,17 +23,19 @@ package com.frankgh.wpiparking;
 import android.content.Context;
 import android.content.res.Resources;
 
+import com.frankgh.wpiparking.R;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.location.GeofenceStatusCodes;
 
 /**
  * Geofence error codes mapped to error messages.
  */
-class GeofenceErrorMessages {
+public class GeofenceErrorMessages {
     /**
      * Prevents instantiation.
      */
-    private GeofenceErrorMessages() {}
+    private GeofenceErrorMessages() {
+    }
 
     /**
      * Returns the error string for a geofencing exception.
