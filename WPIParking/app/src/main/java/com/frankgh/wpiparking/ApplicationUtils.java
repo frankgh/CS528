@@ -2,7 +2,9 @@ package com.frankgh.wpiparking;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 
 import com.frankgh.wpiparking.models.ParkingLot;
@@ -29,10 +31,20 @@ public class ApplicationUtils {
         return false;
     }
 
-    static ParkingLot getLotFromDataSnapshot(DataSnapshot singleSnapshot) {
+    public static ParkingLot getLotFromDataSnapshot(DataSnapshot singleSnapshot) {
         Log.d(TAG, "getLotFromDataSnapshot");
         ParkingLot parkingLot = singleSnapshot.getValue(ParkingLot.class);
         parkingLot.setName(singleSnapshot.getKey());
         return parkingLot;
+    }
+
+    /**
+     * Return the current state of the permissions needed.
+     */
+    public static boolean checkPermissions(@NonNull Context ctx) {
+        Log.d(TAG, "checkPermission");
+        int permissionState = ActivityCompat.checkSelfPermission(ctx,
+                android.Manifest.permission.ACCESS_FINE_LOCATION);
+        return permissionState == PackageManager.PERMISSION_GRANTED;
     }
 }

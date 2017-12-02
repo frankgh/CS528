@@ -5,6 +5,12 @@
     "lots": {
       ".read": "auth != null",
       ".write": false
+    },
+	"parking-events": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
     }
   }
 }

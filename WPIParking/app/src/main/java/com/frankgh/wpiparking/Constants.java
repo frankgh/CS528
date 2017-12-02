@@ -27,21 +27,32 @@ import java.util.HashMap;
  * Constants used in this sample.
  */
 
-final class Constants {
+public final class Constants {
 
     public static final String LATLNG_WPI = "WPI";
 
-    static final float GEOFENCE_RADIUS_IN_METERS = 2 * 1609; // 2 miles, 1.6 km
+    static final int GEOFENCE_RADIUS_IN_METERS = 1609 / 2; // 2 miles, 1.6 km
     /**
      * Map for storing information about airports in the San Francisco bay area.
      */
     static final HashMap<String, LatLng> WPI_AREA_LANDMARKS = new HashMap<>();
+    /**
+     * Loitering delay for the geofence
+     */
+    static final int GEOFENCE_LOITERING_DELAY =
+            60 * 1000; // 1 minute
+    /**
+     * Re-add geofence after expiration
+     */
+    static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
+            7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
     private static final String PACKAGE_NAME = "com.frankgh.wpiparking.Geofence";
-    static final String GEOFENCES_ADDED_KEY = PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";
+    public static final String GEOFENCES_ADDED_KEY = PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";
 
     static {
         WPI_AREA_LANDMARKS.put(LATLNG_WPI, new LatLng(42.274641, -71.80634)); // Worcester Polytechnic Institute.
     }
 
-    private Constants() {}
+    private Constants() {
+    }
 }
