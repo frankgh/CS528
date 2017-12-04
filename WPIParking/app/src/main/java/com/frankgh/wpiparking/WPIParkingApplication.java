@@ -3,6 +3,8 @@ package com.frankgh.wpiparking;
 import android.app.Application;
 import android.util.Log;
 
+import com.google.firebase.database.FirebaseDatabase;
+
 /**
  * @author Francisco Guerrero <email>me@frankgh.com</email> on 11/21/17.
  */
@@ -14,11 +16,12 @@ public class WPIParkingApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        setupAlarmManager();
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
     }
 
     private void setupAlarmManager() {
         Log.d(TAG, "setupAlarmManager invoked");
+
 //        Intent intent = new Intent(this, RestartService.class);
 //        PendingIntent recurringIntent = PendingIntent.getBroadcast(this, REQUEST_CODE,
 //                intent, PendingIntent.FLAG_CANCEL_CURRENT);
