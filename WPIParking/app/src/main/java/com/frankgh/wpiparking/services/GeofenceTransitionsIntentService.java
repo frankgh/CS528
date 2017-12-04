@@ -26,6 +26,7 @@ import com.frankgh.wpiparking.ApplicationUtils;
 import com.frankgh.wpiparking.Constants;
 import com.frankgh.wpiparking.MainActivity;
 import com.frankgh.wpiparking.R;
+import com.frankgh.wpiparking.models.ParkingEvent;
 import com.frankgh.wpiparking.models.ParkingLot;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
@@ -34,6 +35,7 @@ import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -41,6 +43,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -59,13 +62,18 @@ public class GeofenceTransitionsIntentService extends IntentService implements
     private static final String CHANNEL_ID = "wpi_parking_01";
 
     /**
+     * FirebaseAuth for session checking
+     */
+    private FirebaseAuth mAuth;
+
+    /**
      * Provides access to the Geofencing API.
      */
     private GeofencingClient mGeofencingClient;
     /**
      * The references to the firebase database.
      */
-    private DatabaseReference mDatabaseReference;
+    private DatabaseReference mDatabase;
     /**
      * The list of geofences for the parking lots.
      */
@@ -99,43 +107,69 @@ public class GeofenceTransitionsIntentService extends IntentService implements
             return;
         }
 
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        database.setPersistenceEnabled(true);
-        mDatabaseReference = database.getReference();
+        mAuth = FirebaseAuth.getInstance();
+        if (mAuth.getCurrentUser() == null) {
+            return;
+        }
 
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         mGeofencingClient = LocationServices.getGeofencingClient(this);
 
         // Get the transition type.
         int geofenceTransition = geofencingEvent.getGeofenceTransition();
 
-        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_DWELL) {
-            setupInternalGeofences();
-        }
+        // Get the geofences that were triggered. A single event can trigger multiple geofences.
+        List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
 
-        // Test that the reported transition was of interest.
-        if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
-                geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+        // Get the transition details as a String.
+        String geofenceTransitionDetails = getGeofenceTransitionDetails(geofenceTransition,
+                triggeringGeofences);
 
-            // Get the geofences that were triggered. A single event can trigger multiple geofences.
-            List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+        // Send notification and log the transition details.
+        sendNotification(geofenceTransitionDetails);
+        Log.i(TAG, geofenceTransitionDetails);
 
-            if (geofenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
+        switch (geofenceTransition) {
+            case Geofence.GEOFENCE_TRANSITION_ENTER:
+                for (Geofence geofence : triggeringGeofences) {
+                    if (!Constants.LATLNG_WPI.equals(geofence.getRequestId())) {
+                        writeNewParkingEvent(
+                                mAuth.getCurrentUser().getUid(),
+                                geofence.getRequestId(),
+                                System.currentTimeMillis(),
+                                ParkingEvent.PARKING_EVENT_TYPE_ENTER);
+                    }
+                }
+                break;
+
+            case Geofence.GEOFENCE_TRANSITION_DWELL:
+                setupInternalGeofences();
+                break;
+
+            case Geofence.GEOFENCE_TRANSITION_EXIT:
                 // Remove all internal geofences when we leave the container geofence
                 for (Geofence geofence : triggeringGeofences) {
                     if (Constants.LATLNG_WPI.equals(geofence.getRequestId())) {
                         removeInternalGeofences();
+                    } else {
+                        writeNewParkingEvent(
+                                mAuth.getCurrentUser().getUid(),
+                                geofence.getRequestId(),
+                                System.currentTimeMillis(),
+                                ParkingEvent.PARKING_EVENT_TYPE_EXIT);
                     }
                 }
-            }
-
-            // Get the transition details as a String.
-            String geofenceTransitionDetails = getGeofenceTransitionDetails(geofenceTransition,
-                    triggeringGeofences);
-
-            // Send notification and log the transition details.
-            sendNotification(geofenceTransitionDetails);
-            Log.i(TAG, geofenceTransitionDetails);
+                break;
         }
+    }
+
+    private void writeNewParkingEvent(String userId, String lotName, long timestamp, int type) {
+        String key = mDatabase.child("parking-events").push().getKey();
+        ParkingEvent event = new ParkingEvent(lotName, timestamp, type);
+        Map<String, Object> postValues = event.toMap();
+        Map<String, Object> childUpdates = new HashMap<>();
+        childUpdates.put("/parking-events/" + userId + "/" + key, postValues);
+        mDatabase.updateChildren(childUpdates);
     }
 
     /**
@@ -199,7 +233,7 @@ public class GeofenceTransitionsIntentService extends IntentService implements
     private void setupInternalGeofences() {
         Log.d(TAG, "setupInternalGeofences");
         // Initialize Database
-        DatabaseReference lotReference = mDatabaseReference.child("lots");
+        DatabaseReference lotReference = mDatabase.child("lots");
         lotReference.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {

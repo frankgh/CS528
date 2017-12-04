@@ -229,7 +229,6 @@ public class MainActivity extends AppCompatActivity implements
         mParkingLotsRecycler = findViewById(R.id.recycler_lots);
 
         FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
-        firebaseDatabase.setPersistenceEnabled(true);
 
         mParkingLotsReference = firebaseDatabase.getReference().child("lots");
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
