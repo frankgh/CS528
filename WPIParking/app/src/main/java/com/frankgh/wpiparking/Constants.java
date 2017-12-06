@@ -30,7 +30,12 @@ import java.util.HashMap;
 public final class Constants {
 
     public static final String LATLNG_WPI = "WPI";
-
+    /**
+     * The desired time between activity detections. Larger values result in fewer activity
+     * detections while improving battery life. A value of 0 results in activity detections at the
+     * fastest possible rate.
+     */
+    public static final long DETECTION_INTERVAL_IN_MILLISECONDS = 30 * 1000; // 30 seconds
     static final int GEOFENCE_RADIUS_IN_METERS = 1609 / 2; // 2 miles, 1.6 km
     /**
      * Map for storing information about airports in the San Francisco bay area.
@@ -40,13 +45,14 @@ public final class Constants {
      * Loitering delay for the geofence
      */
     static final int GEOFENCE_LOITERING_DELAY =
-            60 * 1000; // 1 minute
+            20 * 1000; // 20 seconds
     /**
      * Re-add geofence after expiration
      */
     static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
             7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
     private static final String PACKAGE_NAME = "com.frankgh.wpiparking.Geofence";
+    public static final String KEY_ACTIVITY_UPDATES_REQUESTED = PACKAGE_NAME + ".ACTIVITY_UPDATES_REQUESTED";
     public static final String GEOFENCES_ADDED_KEY = PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";
 
     static {

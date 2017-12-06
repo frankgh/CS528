@@ -388,7 +388,10 @@ public class MainActivity extends AppCompatActivity implements
                 // Sign out from Firebase
                 mAuth.signOut();
             } else if (GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
-                GoogleSignInOptions gso = new GoogleSignInOptions.Builder().build();
+                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(getString(R.string.default_web_client_id))
+                        .requestEmail()
+                        .build();
                 GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
                 // Google revoke access
                 mGoogleSignInClient.revokeAccess().addOnCompleteListener(this,
@@ -419,7 +422,10 @@ public class MainActivity extends AppCompatActivity implements
                 LoginManager.getInstance().logOut();
             } else if (GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
                 noWait = false;
-                GoogleSignInOptions gso = new GoogleSignInOptions.Builder().build();
+                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                        .requestIdToken(getString(R.string.default_web_client_id))
+                        .requestEmail()
+                        .build();
                 GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
                 mGoogleSignInClient.signOut().addOnCompleteListener(this,
                         new OnCompleteListener<Void>() {

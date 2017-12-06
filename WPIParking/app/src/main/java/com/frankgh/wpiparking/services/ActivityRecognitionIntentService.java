@@ -17,7 +17,7 @@ import java.util.Set;
 
 public class ActivityRecognitionIntentService extends IntentService {
 
-    private static final String TAG = "ActivityRecognition";
+    private static final String TAG = "ActivityRecognitionIS";
     private static final String[] CODE_TEXT = {"IN_VEHICLE", "ON_BICYCLE", "ON_FOOT",
             "STILL", "UNKNOWN", "TILTING", "", "WALKING", "RUNNING"};
 
