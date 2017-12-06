@@ -28,12 +28,15 @@ import com.frankgh.wpiparking.MainActivity;
 import com.frankgh.wpiparking.R;
 import com.frankgh.wpiparking.models.ParkingEvent;
 import com.frankgh.wpiparking.models.ParkingLot;
+import com.google.android.gms.location.ActivityRecognitionClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -144,6 +147,7 @@ public class GeofenceTransitionsIntentService extends IntentService implements
 
             case Geofence.GEOFENCE_TRANSITION_DWELL:
                 setupInternalGeofences();
+                requestActivityRecognitionUpdates();
                 break;
 
             case Geofence.GEOFENCE_TRANSITION_EXIT:
@@ -151,6 +155,7 @@ public class GeofenceTransitionsIntentService extends IntentService implements
                 for (Geofence geofence : triggeringGeofences) {
                     if (Constants.LATLNG_WPI.equals(geofence.getRequestId())) {
                         removeInternalGeofences();
+                        removeActivityRecognitionUpdates();
                     } else {
                         writeNewParkingEvent(
                                 mAuth.getCurrentUser().getUid(),
@@ -481,70 +486,86 @@ public class GeofenceTransitionsIntentService extends IntentService implements
         }
     }
 
-//    /**
-//     * This sample hard codes geofence data. A real app might dynamically create geofences based on
-//     * the user's location.
-//     */
-//    private void populateGeofenceList() {
-//        if (mAdapter == null)
-//            return;
-//        List<ParkingLot> parkingLotList = mAdapter.getParkingLots();
-//        if (parkingLotList == null || parkingLotList.size() == 0)
-//            return;
-//
-//        List<Geofence> geofenceList = new ArrayList<>();
-//        List<ParkingLot> lotsForGeofenceList = new ArrayList<>();
-//        List<String> outdatedGeofenceList = new ArrayList<>();
-//        for (ParkingLot lot : parkingLotList) {
-//            int version = PreferenceManager.getDefaultSharedPreferences(this).getInt(
-//                    Constants.GEOFENCES_ADDED_KEY + "." + lot.getName(), -1);
-//            if (version == -1) {
-//                lotsForGeofenceList.add(lot);
-//                geofenceList.add(new Geofence.Builder()
-//                        // Set the request ID of the geofence. This is a string to identify this
-//                        // geofence.
-//                        .setRequestId(lot.getName())
-//
-//                        // Set the circular region of this geofence.
-//                        .setCircularRegion(
-//                                lot.getLatitude(),
-//                                lot.getLongitude(),
-//                                lot.getRadius()
-//                        )
-//
-//                        // Set the expiration duration of the geofence. This geofence gets automatically
-//                        // removed after this period of time.
-//                        .setExpirationDuration(Geofence.NEVER_EXPIRE)
-//
-//                        // Set the transition types of interest. Alerts are only generated for these
-//                        // transition. We track entry and exit transitions in this sample.
-//                        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-//                                Geofence.GEOFENCE_TRANSITION_EXIT)
-//
-//                        // Create the geofence.
-//                        .build());
-//            } else if (version < lot.getVersion()) {
-//                outdatedGeofenceList.add(lot.getName());
-//                removeGeofencePreference(lot);
-//            }
-//        }
-//        mGeofenceList = geofenceList;
-//        mLotsForGeofenceList = lotsForGeofenceList;
-//        mOutdatedGeofenceList = outdatedGeofenceList;
-//    }
-//
-//    /**
-//     * Removes geofences that have been updated in the database. This method should be called
-//     * after the user has granted the location permission.
-//     */
-//    private void removeOutdatedGeofences() {
-//        if (!checkPermissions()) {
-//            showSnackbar(getString(R.string.insufficient_permissions));
-//            return;
-//        }
-//
-//        if (mOutdatedGeofenceList != null && mOutdatedGeofenceList.size() > 0) {
-//            mGeofencingClient.removeGeofences(mOutdatedGeofenceList);
-//        }
-//    }
+    /**
+     * Starts activity recognition service.
+     */
+    private void requestActivityRecognitionUpdates() {
+        Log.d(TAG, "startActivityRecognitionService");
+        ActivityRecognitionClient mActivityRecognitionClient
+                = new ActivityRecognitionClient(this);
+        Task<Void> task = mActivityRecognitionClient.requestActivityUpdates(
+                Constants.DETECTION_INTERVAL_IN_MILLISECONDS,
+                getActivityDetectionPendingIntent());
+        task.addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                Toast.makeText(getApplicationContext(),
+                        getString(R.string.activity_updates_enabled),
+                        Toast.LENGTH_SHORT)
+                        .show();
+                setUpdatesRequestedState(true);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.w(TAG, getString(R.string.activity_updates_not_enabled));
+                Toast.makeText(getApplicationContext(),
+                        getString(R.string.activity_updates_not_enabled),
+                        Toast.LENGTH_SHORT)
+                        .show();
+                setUpdatesRequestedState(false);
+            }
+        });
+    }
+
+    /**
+     * Stops the activity recognition service.
+     */
+    private void removeActivityRecognitionUpdates() {
+        Log.d(TAG, "stopActivityRecognitionService");
+        ActivityRecognitionClient mActivityRecognitionClient
+                = new ActivityRecognitionClient(this);
+        Task<Void> task = mActivityRecognitionClient.removeActivityUpdates(
+                getActivityDetectionPendingIntent());
+        task.addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                Toast.makeText(getApplicationContext(),
+                        getString(R.string.activity_updates_removed),
+                        Toast.LENGTH_SHORT)
+                        .show();
+                setUpdatesRequestedState(false);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.w(TAG, "Failed to enable activity recognition.");
+                Toast.makeText(getApplicationContext(), getString(R.string.activity_updates_not_removed),
+                        Toast.LENGTH_SHORT).show();
+                setUpdatesRequestedState(true);
+            }
+        });
+    }
+
+    /**
+     * Gets a PendingIntent to be sent for each activity detection.
+     */
+    private PendingIntent getActivityDetectionPendingIntent() {
+        Intent intent = new Intent(this, ActivityRecognitionIntentService.class);
+
+        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling
+        // requestActivityUpdates() and removeActivityUpdates().
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    /**
+     * Sets the boolean in SharedPreferences that tracks whether we are requesting activity
+     * updates.
+     */
+    private void setUpdatesRequestedState(boolean requesting) {
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .edit()
+                .putBoolean(Constants.KEY_ACTIVITY_UPDATES_REQUESTED, requesting)
+                .apply();
+    }
 }
