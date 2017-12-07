@@ -52,6 +52,12 @@ exports.updateAvailableLots = functions.database.ref('/parking-events/{uid}/{pus
     .onWrite(event => {
       const ev = event.data.val();
       const lotRef = admin.database().ref('/lots/' + ev.lotName);
+	  
+	  if (ev.type === 1) { // EXIT
+		  // Delete picture
+		  // admin.storage()
+		  // TODO: Hamid
+	  }
 
       return lotRef
         .once('value')
