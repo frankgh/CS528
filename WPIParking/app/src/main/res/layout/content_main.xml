@@ -60,7 +60,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
-        android:id="@+id/imageButton"
+        android:id="@+id/directionsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -73,6 +73,16 @@
         app:layout_constraintStart_toEndOf="@+id/closest_parking_textview"
         app:layout_constraintTop_toTopOf="@+id/closest_parking_textview"
         app:srcCompat="@drawable/ic_directions" />
+
+    <EditText
+        android:id="@+id/debugEditText"
+        android:layout_width="268dp"
+        android:layout_height="115dp"
+        android:ems="10"
+        android:inputType="textMultiLine"
+        android:textSize="8sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
 </android.support.constraint.ConstraintLayout>
