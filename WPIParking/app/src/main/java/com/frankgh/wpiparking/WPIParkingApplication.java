@@ -1,8 +1,8 @@
 package com.frankgh.wpiparking;
 
 import android.app.Application;
-import android.util.Log;
 
+import com.frankgh.wpiparking.db.AppDatabase;
 import com.google.firebase.database.FirebaseDatabase;
 
 /**
@@ -13,31 +13,21 @@ public class WPIParkingApplication extends Application {
 
     private static final String TAG = "WPIParkingApplication";
 
+    private AppExecutors mAppExecutors;
+
+
     @Override
     public void onCreate() {
         super.onCreate();
         FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        mAppExecutors = new AppExecutors();
     }
 
-    private void setupAlarmManager() {
-        Log.d(TAG, "setupAlarmManager invoked");
+    public AppDatabase getDatabase() {
+        return AppDatabase.getInstance(this, mAppExecutors);
+    }
 
-//        Intent intent = new Intent(this, RestartService.class);
-//        PendingIntent recurringIntent = PendingIntent.getBroadcast(this, REQUEST_CODE,
-//                intent, PendingIntent.FLAG_CANCEL_CURRENT);
-//        AlarmManager alarms = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-//
-//        Date firstLog = new Date();
-//        firstLog.setTime(firstLog.getTime() + 3000);
-//
-//        final long INTERVAL_ONE_MINUTE = 60 * 1000;
-//
-//        // Log repetition
-//        alarms.setRepeating(
-//                AlarmManager.RTC_WAKEUP,
-//                firstLog.getTime(),
-//                //AlarmManager.INTERVAL_FIFTEEN_MINUTES,
-//                INTERVAL_ONE_MINUTE,
-//                recurringIntent);
+    public DataRepository getRepository() {
+        return DataRepository.getInstance(getDatabase());
     }
 }
