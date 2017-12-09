@@ -41,17 +41,23 @@ import android.widget.Toast;
 import com.facebook.login.LoginManager;
 import com.frankgh.wpiparking.auth.ChooserActivity;
 import com.frankgh.wpiparking.models.ParkingLot;
+import com.frankgh.wpiparking.receivers.GeofenceBroadcastReceiver;
 import com.frankgh.wpiparking.services.GeofenceErrorMessages;
-import com.frankgh.wpiparking.services.GeofenceTransitionsIntentService;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.awareness.Awareness;
+import com.google.android.gms.awareness.FenceClient;
+import com.google.android.gms.awareness.fence.AwarenessFence;
+import com.google.android.gms.awareness.fence.FenceQueryRequest;
+import com.google.android.gms.awareness.fence.FenceQueryResponse;
+import com.google.android.gms.awareness.fence.FenceState;
+import com.google.android.gms.awareness.fence.FenceStateMap;
+import com.google.android.gms.awareness.fence.FenceUpdateRequest;
+import com.google.android.gms.awareness.fence.LocationFence;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.GeofencingClient;
-import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -178,13 +184,13 @@ public class MainActivity extends AppCompatActivity implements
      */
     private Map<String, Marker> mMarkerMap;
     /**
-     * Provides access to the Geofencing API.
+     * Provides access to the Awareness API.
      */
-    private GeofencingClient mGeofencingClient;
+    private FenceClient mFenceClient;
+
     /**
-     * The list of geofences used in this sample.
+     * For debugging purposes
      */
-    private List<Geofence> mGeofenceList;
     private EditText mDebugEditText;
 
     @Override
@@ -222,8 +228,6 @@ public class MainActivity extends AppCompatActivity implements
         // [END initialize_map]
 
         // Empty list for storing geofences.
-        mGeofenceList = new ArrayList<>();
-        populateGeofenceList();
 
         mMarkerMap = new HashMap<>();
         mParkingLotsRecycler = findViewById(R.id.recycler_lots);
@@ -241,7 +245,8 @@ public class MainActivity extends AppCompatActivity implements
         buildLocationSettingsRequest();
 
         mParkingLotsRecycler.setLayoutManager(new LinearLayoutManager(this));
-        mGeofencingClient = LocationServices.getGeofencingClient(this);
+        // Get a reference to the awareness fence client
+        mFenceClient = Awareness.getFenceClient(this);
 
         mDebugEditText = findViewById(R.id.debugEditText);
 
@@ -263,11 +268,9 @@ public class MainActivity extends AppCompatActivity implements
                         }
                     }
                     mDebugEditText.setText(text);
-
                 }
             }
         });
-
     }
 
     @Override
@@ -409,6 +412,7 @@ public class MainActivity extends AppCompatActivity implements
      * Log out from all providers.
      */
     private void logout() {
+        updateGeofencesAdded(-1);
         if (mAdapter != null) mAdapter.cleanupListener();
         FirebaseUser user = mAuth.getCurrentUser();
         List<? extends UserInfo> data = user.getProviderData();
@@ -728,8 +732,28 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void showLoginChooser() {
+        if (mFenceClient != null && Constants.WPI_AREA_LANDMARKS.size() > 0) {
+            FenceUpdateRequest.Builder builder = new FenceUpdateRequest.Builder();
+            for (Map.Entry<String, LatLng> entry : Constants.WPI_AREA_LANDMARKS.entrySet()) {
+                builder.removeFence(entry.getKey() + "-dwell");
+                builder.removeFence(entry.getKey() + "-exiting");
+            }
+
+            mFenceClient.updateFences(builder.build())
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            close();
+                        }
+                    });
+        } else {
+            close();
+        }
+    }
+
+    private void close() {
         Log.d(TAG, "currentUser is null. Launching ChooserActivity");
-        startActivity(new Intent(this, ChooserActivity.class));
+        startActivity(new Intent(MainActivity.this, ChooserActivity.class));
         Log.d(TAG, "Finish MainActivity");
         finish();
     }
@@ -776,43 +800,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /**
-     * This sample hard codes geofence data. A real app might dynamically create geofences based on
-     * the user's location.
-     */
-    private void populateGeofenceList() {
-        for (Map.Entry<String, LatLng> entry : Constants.WPI_AREA_LANDMARKS.entrySet()) {
-            mGeofenceList.add(new Geofence.Builder()
-                    // Set the request ID of the geofence. This is a string to identify this
-                    // geofence.
-                    .setRequestId(entry.getKey())
-
-                    // Set the circular region of this geofence.
-                    .setCircularRegion(
-                            entry.getValue().latitude,
-                            entry.getValue().longitude,
-                            Constants.GEOFENCE_RADIUS_IN_METERS
-                    )
-
-                    // Set the expiration duration of the geofence. This geofence gets automatically
-                    // removed after this period of time.
-                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
-
-                    // Sets the delay between GEOFENCE_TRANSITION_ENTER AND GEOFENCE_TRANSITION_DWELLING
-                    // in milliseconds.
-                    .setLoiteringDelay(Constants.GEOFENCE_LOITERING_DELAY)
-
-                    // Set the transition types of interest. Alerts are only generated for these
-                    // transition. We track entry and exit transitions in this sample.
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                            Geofence.GEOFENCE_TRANSITION_DWELL |
-                            Geofence.GEOFENCE_TRANSITION_EXIT)
-
-                    // Create the geofence.
-                    .build());
-        }
-    }
-
-    /**
      * Performs the geofencing task that was pending until location permission was granted.
      */
     private void performPendingGeofenceTask() {
@@ -825,6 +812,32 @@ public class MainActivity extends AppCompatActivity implements
      * Check whether geofence needs to be added
      */
     private boolean shouldAddGeofences() {
+        List<String> list = new ArrayList<>();
+        for (String key : Constants.WPI_AREA_LANDMARKS.keySet()) {
+            list.add(key + "-dwell");
+            list.add(key + "-exiting");
+        }
+        FenceQueryRequest request = FenceQueryRequest.forFences(list);
+        mFenceClient.queryFences(request).addOnCompleteListener(new OnCompleteListener<FenceQueryResponse>() {
+            @Override
+            public void onComplete(@NonNull Task<FenceQueryResponse> fenceQueryResult) {
+                if (!fenceQueryResult.isSuccessful()) {
+                    Log.e(TAG, "Could not query fences");
+                    return;
+                }
+                FenceStateMap map = fenceQueryResult.getResult().getFenceStateMap();
+                for (String fenceKey : map.getFenceKeys()) {
+                    FenceState fenceState = map.getFenceState(fenceKey);
+                    Log.i(TAG, "Fence " + fenceKey + ": "
+                            + fenceState.getCurrentState()
+                            + ", was="
+                            + fenceState.getPreviousState()
+                            + ", lastUpdateTime="
+                            + fenceState.getLastFenceUpdateTimeMillis());
+                }
+            }
+        });
+
         long added = PreferenceManager.getDefaultSharedPreferences(this).getLong(
                 Constants.GEOFENCES_ADDED_KEY, -1);
         return System.currentTimeMillis() - added > Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS;
@@ -852,29 +865,46 @@ public class MainActivity extends AppCompatActivity implements
             showSnackbar(getString(R.string.insufficient_permissions));
             return;
         }
+        if (Constants.WPI_AREA_LANDMARKS.isEmpty()) {
+            return;
+        }
 
-        mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
+        FenceUpdateRequest.Builder builder = new FenceUpdateRequest.Builder();
+        PendingIntent pendingIntent = getFencePendingIntent();
+
+        for (Map.Entry<String, LatLng> entry : Constants.WPI_AREA_LANDMARKS.entrySet()) {
+            // Set the circular region of this fence.
+            AwarenessFence inLocationFence = LocationFence.in(
+                    entry.getValue().latitude,
+                    entry.getValue().longitude,
+                    Constants.GEOFENCE_RADIUS_IN_METERS,
+                    Constants.GEOFENCE_LOITERING_DELAY
+            );
+
+            // Set the circular region for exit
+            AwarenessFence exitingLocationFence = LocationFence.exiting(
+                    entry.getValue().latitude,
+                    entry.getValue().longitude,
+                    Constants.GEOFENCE_RADIUS_IN_METERS
+            );
+
+            // Add "dwell" fence
+            builder.addFence(
+                    entry.getKey() + "-dwell",
+                    inLocationFence,
+                    pendingIntent
+            );
+
+            // Add exiting fence
+            builder.addFence(
+                    entry.getKey() + "-exiting",
+                    exitingLocationFence,
+                    pendingIntent
+            );
+        }
+
+        mFenceClient.updateFences(builder.build())
                 .addOnCompleteListener(this);
-    }
-
-    /**
-     * Builds and returns a GeofencingRequest. Specifies the list of geofences to be monitored.
-     * Also specifies how the geofence notifications are initially triggered.
-     */
-    private GeofencingRequest getGeofencingRequest() {
-        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-
-        // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
-        // GEOFENCE_TRANSITION_ENTER notification when the geofence is added and if the device
-        // is already inside that geofence.
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER |
-                GeofencingRequest.INITIAL_TRIGGER_DWELL);
-
-        // Add the geofences to be monitored by geofencing service.
-        builder.addGeofences(mGeofenceList);
-
-        // Return a GeofencingRequest.
-        return builder.build();
     }
 
     /**
@@ -884,11 +914,11 @@ public class MainActivity extends AppCompatActivity implements
      *
      * @return A PendingIntent for the IntentService that handles geofence transitions.
      */
-    private PendingIntent getGeofencePendingIntent() {
-        Log.d(TAG, "getGeofencePendingIntent invoked");
-        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+    private PendingIntent getFencePendingIntent() {
+        Log.d(TAG, "getFencePendingIntent invoked");
+        Intent intent = new Intent(this, GeofenceBroadcastReceiver.class);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling addGeofences().
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     /**
@@ -944,15 +974,15 @@ public class MainActivity extends AppCompatActivity implements
      * Cache of the children views for a parking lot list item.
      */
     private static class ParkingLotViewHolder extends RecyclerView.ViewHolder {
-        //        @BindVie/w(R.id.lot_name_textview)
         private TextView lotNameTextView;
-        //        @BindView(R.id.lot_availability_textview)
         private TextView lotAvailabilityTextView;
+        private ImageView lotBubbleImageView;
 
         ParkingLotViewHolder(View view) {
             super(view);
             lotNameTextView = itemView.findViewById(R.id.lot_name_textview);
             lotAvailabilityTextView = itemView.findViewById(R.id.lot_availability_textview);
+            lotBubbleImageView = itemView.findViewById(R.id.lot_bubble);
         }
     }
 
@@ -1064,8 +1094,15 @@ public class MainActivity extends AppCompatActivity implements
             ParkingLot lot = mParkingLots.get(position);
             holder.lotNameTextView.setText(lot.getDisplayName());
 
+            if (lot.getAvailable() <= 5) {
+                holder.lotBubbleImageView.setColorFilter(Color.argb(255, 255, 255, 51));
+            } else {
+                holder.lotBubbleImageView.setColorFilter(Color.argb(255, 173, 255, 47));
+            }
+
             if (lot.isFull()) {
                 holder.lotAvailabilityTextView.setText(R.string.parking_lot_full);
+                holder.lotBubbleImageView.setColorFilter(Color.argb(255, 139, 0, 0));
             } else if (lot.getAvailable() == 1) {
                 holder.lotAvailabilityTextView.setText(R.string.one_spot);
             } else {
