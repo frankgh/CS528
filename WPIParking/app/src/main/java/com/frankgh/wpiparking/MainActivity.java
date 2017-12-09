@@ -41,8 +41,8 @@ import android.widget.Toast;
 import com.facebook.login.LoginManager;
 import com.frankgh.wpiparking.auth.ChooserActivity;
 import com.frankgh.wpiparking.models.ParkingLot;
+import com.frankgh.wpiparking.receivers.GeofenceBroadcastReceiver;
 import com.frankgh.wpiparking.services.GeofenceErrorMessages;
-import com.frankgh.wpiparking.services.GeofenceTransitionsIntentService;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -91,6 +91,7 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Transformation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -409,6 +410,7 @@ public class MainActivity extends AppCompatActivity implements
      * Log out from all providers.
      */
     private void logout() {
+        updateGeofencesAdded(-1);
         if (mAdapter != null) mAdapter.cleanupListener();
         FirebaseUser user = mAuth.getCurrentUser();
         List<? extends UserInfo> data = user.getProviderData();
@@ -728,8 +730,27 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void showLoginChooser() {
+        List<String> geofenceList = Arrays.asList(
+                Constants.WPI_AREA_LANDMARKS
+                        .keySet()
+                        .toArray(new String[Constants.WPI_AREA_LANDMARKS.size()]));
+
+        if (mGeofencingClient != null && geofenceList.size() > 0) {
+            mGeofencingClient.removeGeofences(geofenceList)
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            close();
+                        }
+                    });
+        } else {
+            close();
+        }
+    }
+
+    private void close() {
         Log.d(TAG, "currentUser is null. Launching ChooserActivity");
-        startActivity(new Intent(this, ChooserActivity.class));
+        startActivity(new Intent(MainActivity.this, ChooserActivity.class));
         Log.d(TAG, "Finish MainActivity");
         finish();
     }
@@ -886,9 +907,9 @@ public class MainActivity extends AppCompatActivity implements
      */
     private PendingIntent getGeofencePendingIntent() {
         Log.d(TAG, "getGeofencePendingIntent invoked");
-        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+        Intent intent = new Intent(this, GeofenceBroadcastReceiver.class);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling addGeofences().
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        return PendingIntent.getBroadcast(this, 0, intent, 0);
     }
 
     /**
