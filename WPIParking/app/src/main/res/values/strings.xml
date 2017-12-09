@@ -84,6 +84,7 @@
 
     <string name="geofences_added">Geofences added</string>
     <string name="geofences_removed">Geofences removed</string>
+    <string name="title_activity_bluetooth_disc">BluetoothDiscActivity</string>
 
     <string name="activity_updates_enabled">Activity updates enabled</string>
     <string name="activity_updates_not_enabled">Failed to enable activity updates</string>

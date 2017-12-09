@@ -9,6 +9,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -78,8 +80,12 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
             View view = convertView;
 
             if (convertView == null) {
+                //ViewHolder viewHolder = new ViewHolder();
                 LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
                 view = inflater.inflate(android.R.layout.simple_list_item_2, null);
+
+                //viewHolder.button = (Button) convertView.findViewById(R.id.list_item_btn);
+                //convertView.setTag(viewHolder);
             }
 
             ((TextView) view.findViewById(android.R.id.text1)).setText(mClasses[position].getSimpleName());
@@ -92,5 +98,8 @@ public class ChooserActivity extends AppCompatActivity implements AdapterView.On
             mDescriptionIds = descriptionIds;
         }
     }
+    public class ViewHolder {
 
+        Button button;
+    }
 }
