@@ -4,6 +4,7 @@
     package="com.frankgh.wpiparking">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
@@ -27,6 +28,9 @@
         -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
+        <meta-data
+            android:name="com.google.android.awareness.API_KEY"
             android:value="@string/google_maps_key" />
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
@@ -63,16 +67,21 @@
             android:theme="@style/AppTheme.NoActionBar" />
 
         <service
-            android:name=".services.ParkingService"
-            android:stopWithTask="false" />
-        <service android:name=".services.ActivityRecognitionIntentService" />
-        <service android:name=".services.GeofenceTransitionsIntentService" />
+            android:name=".services.FenceJobIntentService"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
-        <receiver android:name=".receivers.BootCompleteReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-            </intent-filter>
-        </receiver>
+        <service
+            android:name=".services.GeofenceJobIntentService"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <receiver android:name="com.frankgh.wpiparking.receivers.FenceBroadcastReceiver" />
+        <receiver
+            android:name="com.frankgh.wpiparking.receivers.GeofenceBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true" />
+        <!--<service android:name=".services.GeofenceIntentService" />-->
 
     </application>
 

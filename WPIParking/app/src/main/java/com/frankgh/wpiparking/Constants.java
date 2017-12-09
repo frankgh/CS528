@@ -30,13 +30,11 @@ import java.util.HashMap;
 public final class Constants {
 
     public static final String LATLNG_WPI = "WPI";
+
     /**
-     * The desired time between activity detections. Larger values result in fewer activity
-     * detections while improving battery life. A value of 0 results in activity detections at the
-     * fastest possible rate.
+     * The size of the outer geofence in meters.
      */
-    public static final long DETECTION_INTERVAL_IN_MILLISECONDS = 30 * 1000; // 30 seconds
-    static final int GEOFENCE_RADIUS_IN_METERS = 1609 / 2; // 2 miles, 1.6 km
+    static final int GEOFENCE_RADIUS_IN_METERS = 1609 / 2; //1609 / 2; // 2 miles, 1.6 km
     /**
      * Map for storing information about airports in the San Francisco bay area.
      */
@@ -44,19 +42,27 @@ public final class Constants {
     /**
      * Loitering delay for the geofence
      */
-    static final int GEOFENCE_LOITERING_DELAY =
-            20 * 1000; // 20 seconds
+    static final int GEOFENCE_LOITERING_DELAY = 20 * 1000; // 20 seconds
     /**
      * Re-add geofence after expiration
      */
-    static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS =
-            7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    /**
+     * The name of the package
+     */
     private static final String PACKAGE_NAME = "com.frankgh.wpiparking.Geofence";
-    public static final String KEY_ACTIVITY_UPDATES_REQUESTED = PACKAGE_NAME + ".ACTIVITY_UPDATES_REQUESTED";
+    /**
+     * The key to store that the Geofence has been added
+     */
     public static final String GEOFENCES_ADDED_KEY = PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";
+    /**
+     * The intent action which will be fired when your fence is triggered.
+     */
+    public static final String FENCE_RECEIVER_ACTION = PACKAGE_NAME + ".FENCE_RECEIVER_ACTION";
 
     static {
-        WPI_AREA_LANDMARKS.put(LATLNG_WPI, new LatLng(42.274641, -71.80634)); // Worcester Polytechnic Institute.
+        // Worcester Polytechnic Institute.
+        WPI_AREA_LANDMARKS.put(LATLNG_WPI, new LatLng(42.274641, -71.80634));
     }
 
     private Constants() {
