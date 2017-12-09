@@ -49,6 +49,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.awareness.Awareness;
 import com.google.android.gms.awareness.FenceClient;
 import com.google.android.gms.awareness.fence.AwarenessFence;
+import com.google.android.gms.awareness.fence.FenceQueryRequest;
+import com.google.android.gms.awareness.fence.FenceQueryResponse;
+import com.google.android.gms.awareness.fence.FenceState;
+import com.google.android.gms.awareness.fence.FenceStateMap;
 import com.google.android.gms.awareness.fence.FenceUpdateRequest;
 import com.google.android.gms.awareness.fence.LocationFence;
 import com.google.android.gms.common.api.ApiException;
@@ -264,11 +268,9 @@ public class MainActivity extends AppCompatActivity implements
                         }
                     }
                     mDebugEditText.setText(text);
-
                 }
             }
         });
-
     }
 
     @Override
@@ -733,7 +735,8 @@ public class MainActivity extends AppCompatActivity implements
         if (mFenceClient != null && Constants.WPI_AREA_LANDMARKS.size() > 0) {
             FenceUpdateRequest.Builder builder = new FenceUpdateRequest.Builder();
             for (Map.Entry<String, LatLng> entry : Constants.WPI_AREA_LANDMARKS.entrySet()) {
-                builder.removeFence(entry.getKey());
+                builder.removeFence(entry.getKey() + "-dwell");
+                builder.removeFence(entry.getKey() + "-exiting");
             }
 
             mFenceClient.updateFences(builder.build())
@@ -809,6 +812,32 @@ public class MainActivity extends AppCompatActivity implements
      * Check whether geofence needs to be added
      */
     private boolean shouldAddGeofences() {
+        List<String> list = new ArrayList<>();
+        for (String key : Constants.WPI_AREA_LANDMARKS.keySet()) {
+            list.add(key + "-dwell");
+            list.add(key + "-exiting");
+        }
+        FenceQueryRequest request = FenceQueryRequest.forFences(list);
+        mFenceClient.queryFences(request).addOnCompleteListener(new OnCompleteListener<FenceQueryResponse>() {
+            @Override
+            public void onComplete(@NonNull Task<FenceQueryResponse> fenceQueryResult) {
+                if (!fenceQueryResult.isSuccessful()) {
+                    Log.e(TAG, "Could not query fences");
+                    return;
+                }
+                FenceStateMap map = fenceQueryResult.getResult().getFenceStateMap();
+                for (String fenceKey : map.getFenceKeys()) {
+                    FenceState fenceState = map.getFenceState(fenceKey);
+                    Log.i(TAG, "Fence " + fenceKey + ": "
+                            + fenceState.getCurrentState()
+                            + ", was="
+                            + fenceState.getPreviousState()
+                            + ", lastUpdateTime="
+                            + fenceState.getLastFenceUpdateTimeMillis());
+                }
+            }
+        });
+
         long added = PreferenceManager.getDefaultSharedPreferences(this).getLong(
                 Constants.GEOFENCES_ADDED_KEY, -1);
         return System.currentTimeMillis() - added > Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS;
@@ -844,15 +873,6 @@ public class MainActivity extends AppCompatActivity implements
         PendingIntent pendingIntent = getFencePendingIntent();
 
         for (Map.Entry<String, LatLng> entry : Constants.WPI_AREA_LANDMARKS.entrySet()) {
-
-
-            // Create primitive fence for entering location fence
-            AwarenessFence enteringLocationFence = LocationFence.entering(
-                    entry.getValue().latitude,
-                    entry.getValue().longitude,
-                    Constants.GEOFENCE_RADIUS_IN_METERS
-            );
-
             // Set the circular region of this fence.
             AwarenessFence inLocationFence = LocationFence.in(
                     entry.getValue().latitude,
@@ -861,17 +881,24 @@ public class MainActivity extends AppCompatActivity implements
                     Constants.GEOFENCE_LOITERING_DELAY
             );
 
-            // Create a combination fence to OR primitive fences.
-            AwarenessFence enteringOrInLocationFence = AwarenessFence.or(
-                    enteringLocationFence,
-                    inLocationFence
+            // Set the circular region for exit
+            AwarenessFence exitingLocationFence = LocationFence.exiting(
+                    entry.getValue().latitude,
+                    entry.getValue().longitude,
+                    Constants.GEOFENCE_RADIUS_IN_METERS
             );
 
-            // Add fence
+            // Add "dwell" fence
             builder.addFence(
-                    // Set the request ID of the fence. This is a string to identify this fence.
-                    entry.getKey(),
-                    enteringOrInLocationFence,
+                    entry.getKey() + "-dwell",
+                    inLocationFence,
+                    pendingIntent
+            );
+
+            // Add exiting fence
+            builder.addFence(
+                    entry.getKey() + "-exiting",
+                    exitingLocationFence,
                     pendingIntent
             );
         }

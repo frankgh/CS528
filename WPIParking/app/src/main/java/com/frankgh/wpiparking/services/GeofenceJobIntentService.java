@@ -15,7 +15,6 @@ import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.JobIntentService;
 import android.support.v4.app.TaskStackBuilder;
-import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -29,10 +28,10 @@ import com.google.android.gms.awareness.Awareness;
 import com.google.android.gms.awareness.FenceClient;
 import com.google.android.gms.awareness.fence.AwarenessFence;
 import com.google.android.gms.awareness.fence.DetectedActivityFence;
+import com.google.android.gms.awareness.fence.FenceState;
 import com.google.android.gms.awareness.fence.FenceUpdateRequest;
 import com.google.android.gms.awareness.fence.LocationFence;
 import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.GeofencingEvent;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -89,14 +88,7 @@ public class GeofenceJobIntentService extends JobIntentService {
      */
     @Override
     public void onHandleWork(Intent intent) {
-        Log.d(TAG, "onHandleIntent invoked");
-        GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
-        if (geofencingEvent.hasError()) {
-            String errorMessage = GeofenceErrorMessages.getErrorString(this,
-                    geofencingEvent.getErrorCode());
-            Log.e(TAG, errorMessage);
-            return;
-        }
+        Log.d(TAG, "onHandleWork invoked");
 
         mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() == null) {
@@ -109,48 +101,76 @@ public class GeofenceJobIntentService extends JobIntentService {
         // Get a reference to the awareness fence client
         mFenceClient = Awareness.getFenceClient(this);
 
-        // Get the transition type.
-        int geofenceTransition = geofencingEvent.getGeofenceTransition();
+        // The state information for the given fence is em
+        FenceState fenceState = FenceState.extract(intent);
 
-        // Get the geofences that were triggered. A single event can trigger multiple geofences.
-        List<Geofence> triggeringGeofences = geofencingEvent.getTriggeringGeofences();
+        if (fenceState.getCurrentState() != FenceState.TRUE) {
+            return;
+        }
+
+        // Get the name of the fence
+        String fenceName = parseFenceName(fenceState.getFenceKey());
+
+        // Get the transition type.
+        int geofenceTransition = parseFenceTransition(fenceState.getFenceKey());
 
         // Get the transition details as a String.
-        String geofenceTransitionDetails = getGeofenceTransitionDetails(geofenceTransition,
-                triggeringGeofences);
+        String geofenceTransitionDetails = getGeofenceTransitionDetails(geofenceTransition, fenceName);
 
         // Send notification and log the transition details.
         sendNotification(geofenceTransitionDetails);
         Log.i(TAG, geofenceTransitionDetails);
 
-        handleTransition(geofenceTransition, triggeringGeofences);
+        handleTransition(geofenceTransition, fenceName);
+    }
+
+    /**
+     * Parse the name of the fence
+     *
+     * @param fenceKey
+     * @return
+     */
+    private String parseFenceName(String fenceKey) {
+        int index = fenceKey.indexOf('-');
+        return fenceKey.substring(0, index);
+    }
+
+    /**
+     * Parse the transition type
+     *
+     * @param fenceKey
+     * @return
+     */
+    private int parseFenceTransition(String fenceKey) {
+        int index = fenceKey.indexOf('-');
+        String s = fenceKey.substring(index);
+        if ("-entering".equals(s)) {
+            return Geofence.GEOFENCE_TRANSITION_ENTER;
+        } else if ("-dwell".equals(s)) {
+            return Geofence.GEOFENCE_TRANSITION_DWELL;
+        } else if ("-exiting".equals(s)) {
+            return Geofence.GEOFENCE_TRANSITION_EXIT;
+        }
+        Log.d(TAG, getString(R.string.unknown_geofence_transition));
+        return -1;
     }
 
     /**
      * Handles the transitions to the geofences
      *
-     * @param geofenceTransition  the transition type
-     * @param triggeringGeofences the triggering geofences
+     * @param geofenceTransition the transition type
+     * @param fenceName          the name of the triggering fence
      */
-    private void handleTransition(int geofenceTransition, List<Geofence> triggeringGeofences) {
+    private void handleTransition(int geofenceTransition, String fenceName) {
         switch (geofenceTransition) {
-            case Geofence.GEOFENCE_TRANSITION_ENTER:
-                for (Geofence geofence : triggeringGeofences) {
-                    if (Constants.LATLNG_WPI.equals(geofence.getRequestId())) {
-                    }
-                }
-                break;
-
             case Geofence.GEOFENCE_TRANSITION_DWELL:
                 readParkingLotData();
                 break;
 
             case Geofence.GEOFENCE_TRANSITION_EXIT:
                 // Remove all internal geofences when we leave the container geofence
-                for (Geofence geofence : triggeringGeofences) {
-                    if (Constants.LATLNG_WPI.equals(geofence.getRequestId())) {
-                        removeInternalFences();
-                    }
+                if (Constants.LATLNG_WPI.equals(fenceName)) {
+                    removeInternalFences();
                 }
                 break;
         }
@@ -159,24 +179,14 @@ public class GeofenceJobIntentService extends JobIntentService {
     /**
      * Gets transition details and returns them as a formatted string.
      *
-     * @param geofenceTransition  The ID of the geofence transition.
-     * @param triggeringGeofences The geofence(s) triggered.
+     * @param geofenceTransition The ID of the geofence transition.
+     * @param fenceName          The name of the fence.
      * @return The transition details formatted as String.
      */
     private String getGeofenceTransitionDetails(
             int geofenceTransition,
-            List<Geofence> triggeringGeofences) {
-        Log.d(TAG, "getGeofenceTransitionDetails invoked");
-        String geofenceTransitionString = getTransitionString(geofenceTransition);
-
-        // Get the Ids of each geofence that was triggered.
-        ArrayList<String> triggeringGeofencesIdsList = new ArrayList<>();
-        for (Geofence geofence : triggeringGeofences) {
-            triggeringGeofencesIdsList.add(geofence.getRequestId());
-        }
-        String triggeringGeofencesIdsString = TextUtils.join(", ", triggeringGeofencesIdsList);
-
-        return geofenceTransitionString + ": " + triggeringGeofencesIdsString;
+            String fenceName) {
+        return getTransitionString(geofenceTransition) + ": " + fenceName;
     }
 
     /**
