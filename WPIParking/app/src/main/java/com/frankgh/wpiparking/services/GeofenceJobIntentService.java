@@ -19,6 +19,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.frankgh.wpiparking.ApplicationUtils;
+import com.frankgh.wpiparking.BuildConfig;
 import com.frankgh.wpiparking.Constants;
 import com.frankgh.wpiparking.MainActivity;
 import com.frankgh.wpiparking.R;
@@ -59,6 +60,7 @@ public class GeofenceJobIntentService extends JobIntentService {
     private static final int JOB_ID = 563;
     private static final String TAG = "GeofenceJIS";
     private static final String CHANNEL_ID = "wpi_parking_01";
+    private static final int PARKING_NOTIFICATION_ID = 796;
     final Handler mHandler = new Handler();
     /**
      * FirebaseAuth for session checking
@@ -117,11 +119,37 @@ public class GeofenceJobIntentService extends JobIntentService {
         // Get the transition details as a String.
         String geofenceTransitionDetails = getGeofenceTransitionDetails(geofenceTransition, fenceName);
 
+
         // Send notification and log the transition details.
-        sendNotification(geofenceTransitionDetails);
+        if (BuildConfig.DEBUG) {
+            sendNotification(geofenceTransitionDetails);
+        }
         Log.i(TAG, geofenceTransitionDetails);
 
         handleTransition(geofenceTransition, fenceName);
+    }
+
+    /**
+     * Handles the transitions to the geofences
+     *
+     * @param geofenceTransition the transition type
+     * @param fenceName          the name of the triggering fence
+     */
+    private void handleTransition(int geofenceTransition, String fenceName) {
+        switch (geofenceTransition) {
+            case Geofence.GEOFENCE_TRANSITION_DWELL:
+                sendParkingNotification();
+                readParkingLotData();
+                break;
+
+            case Geofence.GEOFENCE_TRANSITION_EXIT:
+                // Remove all internal geofences when we leave the container geofence
+                if (Constants.LATLNG_WPI.equals(fenceName)) {
+                    cancelParkingNotification();
+                    removeInternalFences();
+                }
+                break;
+        }
     }
 
     /**
@@ -153,27 +181,6 @@ public class GeofenceJobIntentService extends JobIntentService {
         }
         Log.d(TAG, getString(R.string.unknown_geofence_transition));
         return -1;
-    }
-
-    /**
-     * Handles the transitions to the geofences
-     *
-     * @param geofenceTransition the transition type
-     * @param fenceName          the name of the triggering fence
-     */
-    private void handleTransition(int geofenceTransition, String fenceName) {
-        switch (geofenceTransition) {
-            case Geofence.GEOFENCE_TRANSITION_DWELL:
-                readParkingLotData();
-                break;
-
-            case Geofence.GEOFENCE_TRANSITION_EXIT:
-                // Remove all internal geofences when we leave the container geofence
-                if (Constants.LATLNG_WPI.equals(fenceName)) {
-                    removeInternalFences();
-                }
-                break;
-        }
     }
 
     /**
@@ -376,6 +383,73 @@ public class GeofenceJobIntentService extends JobIntentService {
         Intent intent = new Intent(this, FenceBroadcastReceiver.class);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling addFences().
         return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    /**
+     * Posts a notification in the notification bar when a transition is detected.
+     * If the user clicks the notification, control goes to the MainActivity.
+     */
+    private void sendParkingNotification() {
+        Log.d(TAG, "sendParkingNotification invoked");
+        // Create an explicit content Intent that starts the main Activity.
+        Intent notificationIntent = new Intent(getApplicationContext(), MainActivity.class);
+
+        // Construct a task stack.
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+
+        // Add the main Activity to the task stack as the parent.
+        stackBuilder.addParentStack(MainActivity.class);
+
+        // Push the content Intent onto the stack.
+        stackBuilder.addNextIntent(notificationIntent);
+
+        // Get a PendingIntent containing the entire back stack.
+        PendingIntent notificationPendingIntent =
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        // Get a notification builder that's compatible with platform versions >= 4
+        Notification.Builder builder = new Notification.Builder(this);
+
+        // Define the notification settings.
+        builder.setSmallIcon(R.drawable.ic_notification_parking)
+                // In a real app, you may want to use a library like Volley
+                // to decode the Bitmap.
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(),
+                        R.drawable.ic_notification_parking))
+                .setColor(Color.BLUE)
+                .setContentTitle(getString(R.string.suggest_wpi_parking))
+                .setContentText(getString(R.string.geofence_transition_notification_text))
+                .setContentIntent(notificationPendingIntent);
+
+        // Dismiss notification once the user touches it.
+        builder.setAutoCancel(true);
+
+        // Get an instance of the Notification manager
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.app_name);
+            // Create the channel for the notification
+            NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW);
+            mNotificationManager.createNotificationChannel(mChannel);
+
+            builder.setChannelId(CHANNEL_ID); // Channel ID
+        }
+
+        // Issue the notification
+        mNotificationManager.notify(PARKING_NOTIFICATION_ID, builder.build());
+    }
+
+    /**
+     * Cancel the parking notification
+     */
+    private void cancelParkingNotification() {
+        // Get an instance of the Notification manager
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        mNotificationManager.cancel(PARKING_NOTIFICATION_ID);
     }
 
     /**

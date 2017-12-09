@@ -76,13 +76,19 @@
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
-        <receiver android:name="com.frankgh.wpiparking.receivers.FenceBroadcastReceiver" />
+        <receiver
+            android:name="com.frankgh.wpiparking.receivers.FenceBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true" />
         <receiver
             android:name="com.frankgh.wpiparking.receivers.GeofenceBroadcastReceiver"
             android:enabled="true"
             android:exported="true" />
 
-        <receiver android:name="com.frankgh.wpiparking.receivers.BootBroadcastReceiver">
+        <receiver
+            android:name="com.frankgh.wpiparking.receivers.BootBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
