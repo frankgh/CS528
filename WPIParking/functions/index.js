@@ -54,9 +54,24 @@ exports.updateAvailableLots = functions.database.ref('/parking-events/{uid}/{pus
       const lotRef = admin.database().ref('/lots/' + ev.lotName);
 	  
 	  if (ev.type === 1) { // EXIT
-		  // Delete picture
-		  // admin.storage()
-		  // TODO: Hamid
+      firebase.database().ref("notes")
+          .orderByChild(event.params.uid)
+          .on("value")
+          .then(function(snapshot) {
+            snapshot.forEach(function(childSnapshot) { 
+              childSnapshot.remove();
+            });
+          });
+
+      const filePath = '/images' + event.params.uid + '.png`                                                                                                                       
+          const bucket = gcs.bucket('wpi-parking.appspot.com')
+          const file = bucket.file(filePath)
+
+          file.delete().then(() => {
+              console.log(`Successfully deleted photo with UID`)
+          }).catch(err => {
+              console.log(`Failed to remove photo, error: ${err}`)
+          });
 	  }
 
       return lotRef
