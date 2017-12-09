@@ -89,5 +89,6 @@
     <string name="activity_updates_not_enabled">Failed to enable activity updates</string>
     <string name="activity_updates_removed">Activity updates removed</string>
     <string name="activity_updates_not_removed">Failed to remove activity updates</string>
+    <string name="suggest_wpi_parking">Do you need parking at WPI?</string>
 
 </resources>

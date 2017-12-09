@@ -974,15 +974,15 @@ public class MainActivity extends AppCompatActivity implements
      * Cache of the children views for a parking lot list item.
      */
     private static class ParkingLotViewHolder extends RecyclerView.ViewHolder {
-        //        @BindVie/w(R.id.lot_name_textview)
         private TextView lotNameTextView;
-        //        @BindView(R.id.lot_availability_textview)
         private TextView lotAvailabilityTextView;
+        private ImageView lotBubbleImageView;
 
         ParkingLotViewHolder(View view) {
             super(view);
             lotNameTextView = itemView.findViewById(R.id.lot_name_textview);
             lotAvailabilityTextView = itemView.findViewById(R.id.lot_availability_textview);
+            lotBubbleImageView = itemView.findViewById(R.id.lot_bubble);
         }
     }
 
@@ -1094,8 +1094,15 @@ public class MainActivity extends AppCompatActivity implements
             ParkingLot lot = mParkingLots.get(position);
             holder.lotNameTextView.setText(lot.getDisplayName());
 
+            if (lot.getAvailable() <= 5) {
+                holder.lotBubbleImageView.setColorFilter(Color.argb(255, 255, 255, 51));
+            } else {
+                holder.lotBubbleImageView.setColorFilter(Color.argb(255, 173, 255, 47));
+            }
+
             if (lot.isFull()) {
                 holder.lotAvailabilityTextView.setText(R.string.parking_lot_full);
+                holder.lotBubbleImageView.setColorFilter(Color.argb(255, 139, 0, 0));
             } else if (lot.getAvailable() == 1) {
                 holder.lotAvailabilityTextView.setText(R.string.one_spot);
             } else {
