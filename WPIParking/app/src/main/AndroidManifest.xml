@@ -70,23 +70,21 @@
             android:name=".services.FenceJobIntentService"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-
         <service
             android:name=".services.GeofenceJobIntentService"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <receiver
-            android:name="com.frankgh.wpiparking.receivers.FenceBroadcastReceiver"
+            android:name=".receivers.FenceBroadcastReceiver"
             android:enabled="true"
             android:exported="true" />
         <receiver
-            android:name="com.frankgh.wpiparking.receivers.GeofenceBroadcastReceiver"
+            android:name=".receivers.GeofenceBroadcastReceiver"
             android:enabled="true"
             android:exported="true" />
-
         <receiver
-            android:name="com.frankgh.wpiparking.receivers.BootBroadcastReceiver"
+            android:name=".receivers.BootBroadcastReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -94,6 +92,7 @@
             </intent-filter>
         </receiver>
 
+        <activity android:name=".takePhoto"></activity>
     </application>
 
 </manifest>

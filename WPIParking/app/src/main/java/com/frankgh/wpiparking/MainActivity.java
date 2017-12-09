@@ -331,7 +331,9 @@ public class MainActivity extends AppCompatActivity implements
 
                 break;
             case R.id.nav_slideshow:
+                Intent intent = new Intent(this, takePhoto.class);
 
+                startActivity(intent);
                 break;
             case R.id.nav_manage:
 
