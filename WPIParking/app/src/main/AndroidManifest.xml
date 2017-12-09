@@ -81,7 +81,12 @@
             android:name="com.frankgh.wpiparking.receivers.GeofenceBroadcastReceiver"
             android:enabled="true"
             android:exported="true" />
-        <!--<service android:name=".services.GeofenceIntentService" />-->
+
+        <receiver android:name="com.frankgh.wpiparking.receivers.BootBroadcastReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 
