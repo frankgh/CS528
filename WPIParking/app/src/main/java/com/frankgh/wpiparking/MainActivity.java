@@ -331,6 +331,9 @@ public class MainActivity extends AppCompatActivity implements
 
                 break;
             case R.id.nav_manage:
+                Intent intent = new Intent(this, BluetoothDiscActivity.class);
+                startActivity(intent);
+                finish();
 
                 break;
             case R.id.nav_disconnect:
