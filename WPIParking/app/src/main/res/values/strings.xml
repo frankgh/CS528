@@ -59,8 +59,8 @@
     <string name="geofence_transition_dwell">Dwell</string>
     <string name="unknown_geofence_transition">Unknown Transition</string>
 
-    <string name="geofence_transition_notification_text">
-        Click notification to return to app
+    <string name="fence_notification_text">
+        Tap notification to view available parking
     </string>
 
     <!-- Parking Service Strings -->
