@@ -21,7 +21,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -37,15 +36,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.login.LoginManager;
-import com.frankgh.wpiparking.auth.ChooserActivity;
 import com.frankgh.wpiparking.models.ParkingLot;
 import com.frankgh.wpiparking.services.RegisterFencesJobIntentService;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.awareness.Awareness;
-import com.google.android.gms.awareness.FenceClient;
-import com.google.android.gms.awareness.fence.FenceUpdateRequest;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -73,7 +68,6 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FacebookAuthProvider;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthProvider;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
@@ -92,7 +86,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements
+public class MainActivity extends BaseActivity implements
         OnMapReadyCallback,
         ParkingLotCallbacks,
         NavigationView.OnNavigationItemSelectedListener {
@@ -133,10 +127,6 @@ public class MainActivity extends AppCompatActivity implements
      */
     private GoogleMap mMap;
     /**
-     * Provides the authenticated user for Firebase.
-     */
-    private FirebaseAuth mAuth;
-    /**
      * The marker of the current location on the map.
      */
     private Marker mLocationMarker;
@@ -173,10 +163,6 @@ public class MainActivity extends AppCompatActivity implements
      * Keeps a HashMap of markers for the parking lot.
      */
     private Map<String, Marker> mMarkerMap;
-    /**
-     * Provides access to the Awareness API.
-     */
-    private FenceClient mFenceClient;
 
     /**
      * For debugging purposes
@@ -189,9 +175,7 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         Log.d(TAG, "onCreate");
 
-        mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() == null) {
-            showLoginChooser();
             return;
         }
 
@@ -235,8 +219,6 @@ public class MainActivity extends AppCompatActivity implements
         buildLocationSettingsRequest();
 
         mParkingLotsRecycler.setLayoutManager(new LinearLayoutManager(this));
-        // Get a reference to the awareness fence client
-        mFenceClient = Awareness.getFenceClient(this);
 
         mDebugEditText = findViewById(R.id.debugEditText);
 
@@ -315,15 +297,8 @@ public class MainActivity extends AppCompatActivity implements
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         switch (item.getItemId()) {
-            case R.id.nav_camera:
-                // Handle the camera action
-                break;
-            case R.id.nav_gallery:
-
-                break;
-            case R.id.nav_slideshow:
-                Intent intent = new Intent(this, takePhoto.class);
-
+            case R.id.nav_make_note:
+                Intent intent = new Intent(this, MakeNoteActivity.class);
                 startActivity(intent);
                 break;
             case R.id.nav_manage:
@@ -571,7 +546,6 @@ public class MainActivity extends AppCompatActivity implements
                         .fit()
                         .centerInside()
                         .transform(transformation)
-
                         .into(imageView);
             }
             if (!hasGoogleProvider) {
@@ -729,38 +703,6 @@ public class MainActivity extends AppCompatActivity implements
             Circle circle = mMap.addCircle(circleOptions);
             marker.setTag(circle);
         }
-    }
-
-    /**
-     * Shows the login screen
-     */
-    private void showLoginChooser() {
-        if (mFenceClient != null && Constants.WPI_AREA_LANDMARKS.size() > 0) {
-            FenceUpdateRequest.Builder builder = new FenceUpdateRequest.Builder();
-            for (Map.Entry<String, LatLng> entry : Constants.WPI_AREA_LANDMARKS.entrySet()) {
-                builder.removeFence(entry.getKey() + "-dwell");
-                builder.removeFence(entry.getKey() + "-exiting");
-            }
-
-            mFenceClient.updateFences(builder.build())
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            close();
-                        }
-                    });
-        } else {
-            close();
-        }
-    }
-
-    /**
-     * Start ChooserActivity and finish this Activity
-     */
-    private void close() {
-        startActivity(new Intent(MainActivity.this, ChooserActivity.class));
-        Log.d(TAG, "Finish MainActivity");
-        finish();
     }
 
     private void zoomToLocation(Location location, float zoom) {

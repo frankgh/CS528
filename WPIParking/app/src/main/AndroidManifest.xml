@@ -48,6 +48,10 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".MakeNoteActivity"
+            android:label="@string/make_note"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
             android:name=".auth.GoogleLoginActivity"
             android:excludeFromRecents="true"
             android:label="@string/app_name"
@@ -96,8 +100,6 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-
-        <activity android:name=".takePhoto"></activity>
     </application>
 
 </manifest>
