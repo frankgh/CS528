@@ -34,19 +34,19 @@ public final class Constants {
     /**
      * The size of the outer geofence in meters.
      */
-    static final int GEOFENCE_RADIUS_IN_METERS = 1609 / 2; //1609 / 2; // 2 miles, 1.6 km
+    public static final int GEOFENCE_RADIUS_IN_METERS = 1609 / 2; //1609 / 2; // 2 miles, 1.6 km
     /**
      * Map for storing information about airports in the San Francisco bay area.
      */
-    static final HashMap<String, LatLng> WPI_AREA_LANDMARKS = new HashMap<>();
+    public static final HashMap<String, LatLng> WPI_AREA_LANDMARKS = new HashMap<>();
     /**
      * Loitering delay for the geofence
      */
-    static final int GEOFENCE_LOITERING_DELAY = 20 * 1000; // 20 seconds
+    public static final int GEOFENCE_LOITERING_DELAY = 20 * 1000; // 20 seconds
     /**
      * Re-add geofence after expiration
      */
-    static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    public static final long GEOFENCE_EXPIRATION_IN_MILLISECONDS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
     /**
      * The name of the package
      */
@@ -54,7 +54,7 @@ public final class Constants {
     /**
      * The key to store that the Geofence has been added
      */
-    public static final String GEOFENCES_ADDED_KEY = PACKAGE_NAME + ".GEOFENCES_ADDED_KEY";
+    public static final String FENCES_ADDED_KEY = PACKAGE_NAME + ".FENCES_ADDED_KEY";
     /**
      * The intent action which will be fired when your fence is triggered.
      */
