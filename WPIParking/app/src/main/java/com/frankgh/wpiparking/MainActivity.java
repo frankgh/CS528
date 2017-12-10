@@ -163,11 +163,14 @@ public class MainActivity extends BaseActivity implements
      * Keeps a HashMap of markers for the parking lot.
      */
     private Map<String, Marker> mMarkerMap;
-
     /**
      * For debugging purposes
      */
     private EditText mDebugEditText;
+    /**
+     * The text view to set the closest parking location.
+     */
+    private TextView mClosestParkingTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -201,7 +204,7 @@ public class MainActivity extends BaseActivity implements
         mapFragment.getMapAsync(this);
         // [END initialize_map]
 
-        // Empty list for storing geofences.
+        mClosestParkingTextView = findViewById(R.id.closest_parking_textview);
 
         mMarkerMap = new HashMap<>();
         mParkingLotsRecycler = findViewById(R.id.recycler_lots);
@@ -465,6 +468,7 @@ public class MainActivity extends BaseActivity implements
                         if (task.isSuccessful() && task.getResult() != null) {
                             mCurrentLocation = task.getResult();
                             zoomToLocation(mCurrentLocation, 14f);
+                            updateClosestParkingLot();
                         } else {
                             Log.w(TAG, "getLastLocation:exception", task.getException());
                             showSnackbar(getString(R.string.no_location_detected));
@@ -492,14 +496,38 @@ public class MainActivity extends BaseActivity implements
      * Sets the value of the UI fields for the location latitude, longitude and last update time.
      */
     private void updateLocationUI() {
-        if (mCurrentLocation != null && mMap != null) {
-            if (mLocationMarker != null)
-                mLocationMarker.remove();
+        if (mCurrentLocation != null) {
+            if (mMap != null) {
+                if (mLocationMarker != null)
+                    mLocationMarker.remove();
 
-            MarkerOptions markerOptions = new MarkerOptions()
-                    .position(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()))
-                    .title(mCurrentLocation.getLatitude() + ", " + mCurrentLocation.getLongitude());
-            mLocationMarker = mMap.addMarker(markerOptions);
+                MarkerOptions markerOptions = new MarkerOptions()
+                        .position(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()))
+                        .title(mCurrentLocation.getLatitude() + ", " + mCurrentLocation.getLongitude());
+                mLocationMarker = mMap.addMarker(markerOptions);
+            }
+        }
+        updateClosestParkingLot();
+    }
+
+    /**
+     * Calculates the distance to the closest parking lot and sets it in the textview
+     */
+    private void updateClosestParkingLot() {
+        if (mCurrentLocation != null && mAdapter != null && !mAdapter.getParkingLots().isEmpty()) {
+            float distance = Float.MAX_VALUE;
+            String closestLotName = mAdapter.getParkingLots().get(0).getDisplayName();
+            for (ParkingLot lot : mAdapter.getParkingLots()) {
+                Location lotLocation = new Location("lotLocation");
+                lotLocation.setLatitude(lot.getLatitude());
+                lotLocation.setLongitude(lot.getLongitude());
+                float dist = lotLocation.distanceTo(mCurrentLocation);
+                if (dist < distance) {
+                    distance = dist;
+                    closestLotName = lot.getDisplayName();
+                }
+            }
+            mClosestParkingTextView.setText(closestLotName);
         }
     }
 
@@ -666,6 +694,7 @@ public class MainActivity extends BaseActivity implements
     public void onParkingLotAdded(ParkingLot lot) {
         LatLng latLng = new LatLng(lot.getLatitude(), lot.getLongitude());
         addMarkerMap(lot.getName(), lot.getDisplayName(), lot.getRadius(), latLng);
+        updateClosestParkingLot();
     }
 
     /**
