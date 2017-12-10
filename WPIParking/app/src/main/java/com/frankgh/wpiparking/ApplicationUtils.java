@@ -2,7 +2,9 @@ package com.frankgh.wpiparking;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.util.Log;
@@ -46,5 +48,17 @@ public class ApplicationUtils {
         int permissionState = ActivityCompat.checkSelfPermission(ctx,
                 android.Manifest.permission.ACCESS_FINE_LOCATION);
         return permissionState == PackageManager.PERMISSION_GRANTED;
+    }
+
+    /**
+     * Stores whether geofences were added ore removed in {@link SharedPreferences};
+     *
+     * @param added Whether geofences were added or removed.
+     */
+    public static void updateFencesAdded(@NonNull Context ctx, long added) {
+        PreferenceManager.getDefaultSharedPreferences(ctx)
+                .edit()
+                .putLong(Constants.FENCES_ADDED_KEY, added)
+                .apply();
     }
 }
