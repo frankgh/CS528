@@ -304,10 +304,13 @@ public class MainActivity extends BaseActivity implements
                 Intent intent = new Intent(this, MakeNoteActivity.class);
                 startActivity(intent);
                 break;
-            case R.id.nav_manage:
-                Intent intent2 = new Intent(this, BluetoothDiscActivity.class);
-                startActivity(intent2);
-                finish();
+            case R.id.nav_settings:
+
+                break;
+            case R.id.nav_send_feedback:
+                String surveyUrl = getString(R.string.survey_url);
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(surveyUrl));
+                startActivity(browserIntent);
                 break;
             case R.id.nav_disconnect:
                 revokeAccess();
