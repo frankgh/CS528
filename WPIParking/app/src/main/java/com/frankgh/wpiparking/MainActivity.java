@@ -305,10 +305,9 @@ public class MainActivity extends BaseActivity implements
                 startActivity(intent);
                 break;
             case R.id.nav_manage:
-                Intent intent = new Intent(this, BluetoothDiscActivity.class);
-                startActivity(intent);
+                Intent intent2 = new Intent(this, BluetoothDiscActivity.class);
+                startActivity(intent2);
                 finish();
-
                 break;
             case R.id.nav_disconnect:
                 revokeAccess();
