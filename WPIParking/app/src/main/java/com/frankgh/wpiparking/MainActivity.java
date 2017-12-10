@@ -313,9 +313,6 @@ public class MainActivity extends BaseActivity implements
                 Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(surveyUrl));
                 startActivity(browserIntent);
                 break;
-            case R.id.nav_disconnect:
-                revokeAccess();
-                break;
             case R.id.nav_logout:
                 logout();
                 break;
@@ -334,36 +331,6 @@ public class MainActivity extends BaseActivity implements
             addMarkerMap(Constants.LATLNG_WPI, getString(R.string.app_name),
                     Constants.GEOFENCE_RADIUS_IN_METERS,
                     Constants.WPI_AREA_LANDMARKS.get(Constants.LATLNG_WPI));
-        }
-    }
-
-    /**
-     * Revoke access to Google provider.
-     */
-    private void revokeAccess() {
-        if (mAdapter != null) mAdapter.cleanupListener();
-        FirebaseUser user = mAuth.getCurrentUser();
-        List<? extends UserInfo> data = user.getProviderData();
-        for (UserInfo info : data) {
-            Log.d(TAG, "Logging out Provider: " + info.getProviderId() + " ....");
-            if (FirebaseAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
-                // Sign out from Firebase
-                mAuth.signOut();
-            } else if (GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
-                GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                        .requestIdToken(getString(R.string.default_web_client_id))
-                        .requestEmail()
-                        .build();
-                GoogleSignInClient mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
-                // Google revoke access
-                mGoogleSignInClient.revokeAccess().addOnCompleteListener(this,
-                        new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                showLoginChooser();
-                            }
-                        });
-            }
         }
     }
 
@@ -551,14 +518,11 @@ public class MainActivity extends BaseActivity implements
             List<? extends UserInfo> data = user.getProviderData();
             String displayName = null, email = null;
             Uri photoUrl = null;
-            boolean hasGoogleProvider = false;
             for (UserInfo info : data) {
                 displayName = TextUtils.isEmpty(displayName) ? info.getDisplayName() : displayName;
                 email = TextUtils.isEmpty(email) ? info.getEmail() : email;
                 photoUrl = photoUrl == null ? info.getPhotoUrl() : photoUrl;
-                hasGoogleProvider = hasGoogleProvider || GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId());
             }
-
             displayNameTextView.setText(displayName);
             displayNameTextView.setTag(true);
             if (TextUtils.isEmpty(email)) {
@@ -581,11 +545,6 @@ public class MainActivity extends BaseActivity implements
                         .centerInside()
                         .transform(transformation)
                         .into(imageView);
-            }
-            if (!hasGoogleProvider) {
-                // Hide disconnect menu item
-                NavigationView nv = findViewById(R.id.nav_view);
-                nv.getMenu().findItem(R.id.nav_disconnect).setVisible(false);
             }
         }
     }

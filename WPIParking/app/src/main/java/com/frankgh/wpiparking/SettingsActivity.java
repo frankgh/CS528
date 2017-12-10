@@ -11,10 +11,17 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceScreen;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.auth.UserInfo;
+
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -97,6 +104,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     public static class NotificationPreferenceFragment extends PreferenceFragment {
 
         private ListPreference mBluetoothListPreference;
+        private UnregisterDialogPreference mUnregisterDialogPreference;
 
         @Override
         public void onCreate(Bundle savedInstanceState) {
@@ -104,8 +112,30 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             addPreferencesFromResource(R.xml.pref_notification);
             setHasOptionsMenu(true);
 
+            mUnregisterDialogPreference = (UnregisterDialogPreference) findPreference("unregister");
+            bindUnregisterData();
+
             mBluetoothListPreference = (ListPreference) findPreference("bluetooth_list");
             bindBluetoothPairedDevices();
+        }
+
+        private void bindUnregisterData() {
+            FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+            if (user == null) return;
+            List<? extends UserInfo> data = user.getProviderData();
+            boolean hasGoogleProvider = false;
+            for (UserInfo info : data) {
+                if (GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
+                    hasGoogleProvider = true;
+                    break;
+                }
+            }
+            if (!hasGoogleProvider) {
+                PreferenceScreen preferenceScreen = (PreferenceScreen) findPreference("pref_screen");
+                preferenceScreen.removePreference(mUnregisterDialogPreference);
+                return;
+            }
+            mUnregisterDialogPreference.setSummary(R.string.pref_summary_account);
         }
 
         private void bindBluetoothPairedDevices() {
