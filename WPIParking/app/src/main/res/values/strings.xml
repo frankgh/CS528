@@ -15,11 +15,12 @@
     <string name="title_activity_facebook_login">FacebookLoginActivity</string>
     <string name="title_activity_anonymous_auth">AnonymousAuthActivity</string>
 
-    <string name="desc_google_sign_in">Use a Google Sign In credential to authenticate with Firebase.</string>
+    <string name="desc_google_sign_in">Use a Google Sign In credential to authenticate.</string>
 
-    <string name="desc_facebook_login">Use a Facebook Login credential to authenticate with Firebase.</string>
+    <string name="desc_facebook_login">Use a Facebook Login credential to authenticate.</string>
 
-    <string name="desc_anonymous_auth">Sign in anonymously and then later upgrade to a full Firebase Auth user.</string>
+    <string name="anonymous_auth">Sign in Anonymously</string>
+    <string name="desc_anonymous_auth">Sign in anonymously and then later upgrade to a full user.</string>
     <string name="hint_email">Email</string>
     <string name="hint_password">Password</string>
     <string name="sign_in">Sign In</string>
@@ -96,5 +97,6 @@
     <string name="notes">Notes</string>
     <string name="tap_to_take_picture">Tap below to take a picture:</string>
     <string name="uploading">Uploading...</string>
+    <string name="login_choose">Choose a login method</string>
 
 </resources>
