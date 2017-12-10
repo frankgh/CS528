@@ -17,7 +17,7 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class BaseActivity extends AppCompatActivity {
 
-    private static final String TAG = "BaseActivity";
+    private static final String TAG = "AuthBaseActivity";
 
     @VisibleForTesting
     public ProgressDialog mProgressDialog;
