@@ -1,0 +1,27 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:key="pref_key_notification"
+        android:title="@string/pref_header_notifications">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="notifications_parking"
+            android:summary="@string/pref_description_parking_notifications"
+            android:title="@string/pref_title_parking_notifications" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref_key_bluetooth"
+        android:title="@string/pref_bluetooth">
+        <ListPreference
+            android:defaultValue="-1"
+            android:entries="@array/pref_example_list_titles"
+            android:entryValues="@array/pref_example_list_values"
+            android:key="bluetooth_list"
+            android:negativeButtonText="@null"
+            android:positiveButtonText="@null"
+            android:summary="@string/pref_summary_bluetooth"
+            android:title="@string/pref_title_bluetooth" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
