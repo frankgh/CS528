@@ -2,11 +2,9 @@ package com.frankgh.wpiparking;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Location;
@@ -23,7 +21,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -39,19 +36,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.login.LoginManager;
-import com.frankgh.wpiparking.auth.ChooserActivity;
 import com.frankgh.wpiparking.models.ParkingLot;
-import com.frankgh.wpiparking.services.GeofenceErrorMessages;
-import com.frankgh.wpiparking.services.GeofenceTransitionsIntentService;
+import com.frankgh.wpiparking.services.RegisterFencesJobIntentService;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.ResolvableApiException;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.GeofencingClient;
-import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -76,7 +68,6 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FacebookAuthProvider;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthProvider;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
@@ -95,11 +86,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainActivity extends AppCompatActivity implements
+public class MainActivity extends BaseActivity implements
         OnMapReadyCallback,
         ParkingLotCallbacks,
-        NavigationView.OnNavigationItemSelectedListener,
-        OnCompleteListener<Void> {
+        NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "Main";
 
@@ -136,10 +126,6 @@ public class MainActivity extends AppCompatActivity implements
      * The Google Maps map instance
      */
     private GoogleMap mMap;
-    /**
-     * Provides the authenticated user for Firebase.
-     */
-    private FirebaseAuth mAuth;
     /**
      * The marker of the current location on the map.
      */
@@ -178,14 +164,13 @@ public class MainActivity extends AppCompatActivity implements
      */
     private Map<String, Marker> mMarkerMap;
     /**
-     * Provides access to the Geofencing API.
+     * For debugging purposes
      */
-    private GeofencingClient mGeofencingClient;
-    /**
-     * The list of geofences used in this sample.
-     */
-    private List<Geofence> mGeofenceList;
     private EditText mDebugEditText;
+    /**
+     * The text view to set the closest parking location.
+     */
+    private TextView mClosestParkingTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -193,9 +178,7 @@ public class MainActivity extends AppCompatActivity implements
         setContentView(R.layout.activity_main);
         Log.d(TAG, "onCreate");
 
-        mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() == null) {
-            showLoginChooser();
             return;
         }
 
@@ -221,9 +204,7 @@ public class MainActivity extends AppCompatActivity implements
         mapFragment.getMapAsync(this);
         // [END initialize_map]
 
-        // Empty list for storing geofences.
-        mGeofenceList = new ArrayList<>();
-        populateGeofenceList();
+        mClosestParkingTextView = findViewById(R.id.closest_parking_textview);
 
         mMarkerMap = new HashMap<>();
         mParkingLotsRecycler = findViewById(R.id.recycler_lots);
@@ -241,7 +222,6 @@ public class MainActivity extends AppCompatActivity implements
         buildLocationSettingsRequest();
 
         mParkingLotsRecycler.setLayoutManager(new LinearLayoutManager(this));
-        mGeofencingClient = LocationServices.getGeofencingClient(this);
 
         mDebugEditText = findViewById(R.id.debugEditText);
 
@@ -258,16 +238,16 @@ public class MainActivity extends AppCompatActivity implements
 
                     String text = "";
                     for (String key : map.keySet()) {
-                        if (key.indexOf(Constants.GEOFENCES_ADDED_KEY) == 0) {
+                        if (key.indexOf(Constants.FENCES_ADDED_KEY) == 0) {
                             text += key + ": " + map.get(key).toString() + "\n";
                         }
                     }
                     mDebugEditText.setText(text);
-
                 }
             }
         });
 
+        performPendingFenceTask();
     }
 
     @Override
@@ -293,7 +273,6 @@ public class MainActivity extends AppCompatActivity implements
         if (ApplicationUtils.checkPermissions(this)) {
             configureDataAdapter();
             startLocationUpdates();
-            performPendingGeofenceTask();
         }
     }
 
@@ -321,14 +300,9 @@ public class MainActivity extends AppCompatActivity implements
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         switch (item.getItemId()) {
-            case R.id.nav_camera:
-                // Handle the camera action
-                break;
-            case R.id.nav_gallery:
-
-                break;
-            case R.id.nav_slideshow:
-
+            case R.id.nav_make_note:
+                Intent intent = new Intent(this, MakeNoteActivity.class);
+                startActivity(intent);
                 break;
             case R.id.nav_manage:
                 Intent intent = new Intent(this, BluetoothDiscActivity.class);
@@ -357,24 +331,6 @@ public class MainActivity extends AppCompatActivity implements
             addMarkerMap(Constants.LATLNG_WPI, getString(R.string.app_name),
                     Constants.GEOFENCE_RADIUS_IN_METERS,
                     Constants.WPI_AREA_LANDMARKS.get(Constants.LATLNG_WPI));
-        }
-    }
-
-    /**
-     * Runs when the result of calling {@link #addGeofences()} is available.
-     *
-     * @param task the resulting Task, containing either a result or error.
-     */
-    @Override
-    public void onComplete(@NonNull Task<Void> task) {
-        if (task.isSuccessful()) {
-            Log.d(TAG, getString(R.string.geofences_added));
-            updateGeofencesAdded(System.currentTimeMillis());
-//            Toast.makeText(this, R.string.geofences_added, Toast.LENGTH_SHORT).show();
-        } else {
-            // Get the status code for the error and log it using a user-friendly message.
-            String errorMessage = GeofenceErrorMessages.getErrorString(this, task.getException());
-            Log.w(TAG, errorMessage);
         }
     }
 
@@ -412,9 +368,19 @@ public class MainActivity extends AppCompatActivity implements
      * Log out from all providers.
      */
     private void logout() {
+        // Mark Fence as removed
+        ApplicationUtils.updateFencesAdded(this, -1);
+
+        // Cleanup listeners for the data adapter
         if (mAdapter != null) mAdapter.cleanupListener();
+
+        // Get the current firebase authenticated user
         FirebaseUser user = mAuth.getCurrentUser();
+
+        // Get a list of provider from the user
         List<? extends UserInfo> data = user.getProviderData();
+
+        // Wait to show login chooser
         boolean noWait = true;
         for (UserInfo info : data) {
             Log.d(TAG, "Logging out Provider: " + info.getProviderId() + " ....");
@@ -422,9 +388,12 @@ public class MainActivity extends AppCompatActivity implements
                 // Sign out from Firebase
                 mAuth.signOut();
             } else if (FacebookAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
+                // Sign out FB
                 LoginManager.getInstance().logOut();
             } else if (GoogleAuthProvider.PROVIDER_ID.equals(info.getProviderId())) {
+                // Defer showing login chooser
                 noWait = false;
+                // Sign out Google
                 GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                         .requestIdToken(getString(R.string.default_web_client_id))
                         .requestEmail()
@@ -502,6 +471,7 @@ public class MainActivity extends AppCompatActivity implements
                         if (task.isSuccessful() && task.getResult() != null) {
                             mCurrentLocation = task.getResult();
                             zoomToLocation(mCurrentLocation, 14f);
+                            updateClosestParkingLot();
                         } else {
                             Log.w(TAG, "getLastLocation:exception", task.getException());
                             showSnackbar(getString(R.string.no_location_detected));
@@ -529,14 +499,38 @@ public class MainActivity extends AppCompatActivity implements
      * Sets the value of the UI fields for the location latitude, longitude and last update time.
      */
     private void updateLocationUI() {
-        if (mCurrentLocation != null && mMap != null) {
-            if (mLocationMarker != null)
-                mLocationMarker.remove();
+        if (mCurrentLocation != null) {
+            if (mMap != null) {
+                if (mLocationMarker != null)
+                    mLocationMarker.remove();
 
-            MarkerOptions markerOptions = new MarkerOptions()
-                    .position(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()))
-                    .title(mCurrentLocation.getLatitude() + ", " + mCurrentLocation.getLongitude());
-            mLocationMarker = mMap.addMarker(markerOptions);
+                MarkerOptions markerOptions = new MarkerOptions()
+                        .position(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()))
+                        .title(mCurrentLocation.getLatitude() + ", " + mCurrentLocation.getLongitude());
+                mLocationMarker = mMap.addMarker(markerOptions);
+            }
+        }
+        updateClosestParkingLot();
+    }
+
+    /**
+     * Calculates the distance to the closest parking lot and sets it in the textview
+     */
+    private void updateClosestParkingLot() {
+        if (mCurrentLocation != null && mAdapter != null && !mAdapter.getParkingLots().isEmpty()) {
+            float distance = Float.MAX_VALUE;
+            String closestLotName = mAdapter.getParkingLots().get(0).getDisplayName();
+            for (ParkingLot lot : mAdapter.getParkingLots()) {
+                Location lotLocation = new Location("lotLocation");
+                lotLocation.setLatitude(lot.getLatitude());
+                lotLocation.setLongitude(lot.getLongitude());
+                float dist = lotLocation.distanceTo(mCurrentLocation);
+                if (dist < distance) {
+                    distance = dist;
+                    closestLotName = lot.getDisplayName();
+                }
+            }
+            mClosestParkingTextView.setText(closestLotName);
         }
     }
 
@@ -583,7 +577,6 @@ public class MainActivity extends AppCompatActivity implements
                         .fit()
                         .centerInside()
                         .transform(transformation)
-
                         .into(imageView);
             }
             if (!hasGoogleProvider) {
@@ -696,11 +689,25 @@ public class MainActivity extends AppCompatActivity implements
         mLocationSettingsRequest = builder.build();
     }
 
+    /**
+     * Listener for a parking lot added event
+     *
+     * @param lot the parking lot
+     */
     public void onParkingLotAdded(ParkingLot lot) {
         LatLng latLng = new LatLng(lot.getLatitude(), lot.getLongitude());
         addMarkerMap(lot.getName(), lot.getDisplayName(), lot.getRadius(), latLng);
+        updateClosestParkingLot();
     }
 
+    /**
+     * Add a marker and circle on the map
+     *
+     * @param key    the key for the marker
+     * @param title  the title for the marker
+     * @param radius the radius of the circle
+     * @param latLng the lat/lng coordinates for the marker and circle
+     */
     private void addMarkerMap(String key, String title, int radius, LatLng latLng) {
         if (mMap == null) return;
         synchronized (mMarkerMap) {
@@ -728,13 +735,6 @@ public class MainActivity extends AppCompatActivity implements
             Circle circle = mMap.addCircle(circleOptions);
             marker.setTag(circle);
         }
-    }
-
-    private void showLoginChooser() {
-        Log.d(TAG, "currentUser is null. Launching ChooserActivity");
-        startActivity(new Intent(this, ChooserActivity.class));
-        Log.d(TAG, "Finish MainActivity");
-        finish();
     }
 
     private void zoomToLocation(Location location, float zoom) {
@@ -779,119 +779,11 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /**
-     * This sample hard codes geofence data. A real app might dynamically create geofences based on
-     * the user's location.
-     */
-    private void populateGeofenceList() {
-        for (Map.Entry<String, LatLng> entry : Constants.WPI_AREA_LANDMARKS.entrySet()) {
-            mGeofenceList.add(new Geofence.Builder()
-                    // Set the request ID of the geofence. This is a string to identify this
-                    // geofence.
-                    .setRequestId(entry.getKey())
-
-                    // Set the circular region of this geofence.
-                    .setCircularRegion(
-                            entry.getValue().latitude,
-                            entry.getValue().longitude,
-                            Constants.GEOFENCE_RADIUS_IN_METERS
-                    )
-
-                    // Set the expiration duration of the geofence. This geofence gets automatically
-                    // removed after this period of time.
-                    .setExpirationDuration(Geofence.NEVER_EXPIRE)
-
-                    // Sets the delay between GEOFENCE_TRANSITION_ENTER AND GEOFENCE_TRANSITION_DWELLING
-                    // in milliseconds.
-                    .setLoiteringDelay(Constants.GEOFENCE_LOITERING_DELAY)
-
-                    // Set the transition types of interest. Alerts are only generated for these
-                    // transition. We track entry and exit transitions in this sample.
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                            Geofence.GEOFENCE_TRANSITION_DWELL |
-                            Geofence.GEOFENCE_TRANSITION_EXIT)
-
-                    // Create the geofence.
-                    .build());
-        }
-    }
-
-    /**
      * Performs the geofencing task that was pending until location permission was granted.
      */
-    private void performPendingGeofenceTask() {
-        if (shouldAddGeofences()) {
-            addGeofences();
-        }
-    }
-
-    /**
-     * Check whether geofence needs to be added
-     */
-    private boolean shouldAddGeofences() {
-        long added = PreferenceManager.getDefaultSharedPreferences(this).getLong(
-                Constants.GEOFENCES_ADDED_KEY, -1);
-        return System.currentTimeMillis() - added > Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS;
-    }
-
-    /**
-     * Stores whether geofences were added ore removed in {@link SharedPreferences};
-     *
-     * @param added Whether geofences were added or removed.
-     */
-    private void updateGeofencesAdded(long added) {
-        PreferenceManager.getDefaultSharedPreferences(this)
-                .edit()
-                .putLong(Constants.GEOFENCES_ADDED_KEY, added)
-                .apply();
-    }
-
-    /**
-     * Adds geofences. This method should be called after the user has granted the location
-     * permission.
-     */
-    @SuppressWarnings("MissingPermission")
-    private void addGeofences() {
-        if (!ApplicationUtils.checkPermissions(this)) {
-            showSnackbar(getString(R.string.insufficient_permissions));
-            return;
-        }
-
-        mGeofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
-                .addOnCompleteListener(this);
-    }
-
-    /**
-     * Builds and returns a GeofencingRequest. Specifies the list of geofences to be monitored.
-     * Also specifies how the geofence notifications are initially triggered.
-     */
-    private GeofencingRequest getGeofencingRequest() {
-        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-
-        // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
-        // GEOFENCE_TRANSITION_ENTER notification when the geofence is added and if the device
-        // is already inside that geofence.
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER |
-                GeofencingRequest.INITIAL_TRIGGER_DWELL);
-
-        // Add the geofences to be monitored by geofencing service.
-        builder.addGeofences(mGeofenceList);
-
-        // Return a GeofencingRequest.
-        return builder.build();
-    }
-
-    /**
-     * Gets a PendingIntent to send with the request to add or remove Geofences. Location Services
-     * issues the Intent inside this PendingIntent whenever a geofence transition occurs for the
-     * current list of geofences.
-     *
-     * @return A PendingIntent for the IntentService that handles geofence transitions.
-     */
-    private PendingIntent getGeofencePendingIntent() {
-        Log.d(TAG, "getGeofencePendingIntent invoked");
-        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
-        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling addGeofences().
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    private void performPendingFenceTask() {
+        Intent intent = new Intent("PERFORM_PENDING_FENCE_TASKS");
+        RegisterFencesJobIntentService.enqueueWork(this, intent);
     }
 
     /**
@@ -911,7 +803,7 @@ public class MainActivity extends AppCompatActivity implements
                 configureDataAdapter();
                 getLastLocation();
                 startLocationUpdates();
-                performPendingGeofenceTask();
+                performPendingFenceTask();
             } else {
                 // Permission denied.
 
@@ -947,15 +839,15 @@ public class MainActivity extends AppCompatActivity implements
      * Cache of the children views for a parking lot list item.
      */
     private static class ParkingLotViewHolder extends RecyclerView.ViewHolder {
-        //        @BindVie/w(R.id.lot_name_textview)
         private TextView lotNameTextView;
-        //        @BindView(R.id.lot_availability_textview)
         private TextView lotAvailabilityTextView;
+        private ImageView lotBubbleImageView;
 
         ParkingLotViewHolder(View view) {
             super(view);
             lotNameTextView = itemView.findViewById(R.id.lot_name_textview);
             lotAvailabilityTextView = itemView.findViewById(R.id.lot_availability_textview);
+            lotBubbleImageView = itemView.findViewById(R.id.lot_bubble);
         }
     }
 
@@ -1067,8 +959,15 @@ public class MainActivity extends AppCompatActivity implements
             ParkingLot lot = mParkingLots.get(position);
             holder.lotNameTextView.setText(lot.getDisplayName());
 
+            if (lot.getAvailable() <= 5) {
+                holder.lotBubbleImageView.setColorFilter(Color.argb(255, 255, 255, 51));
+            } else {
+                holder.lotBubbleImageView.setColorFilter(Color.argb(255, 173, 255, 47));
+            }
+
             if (lot.isFull()) {
                 holder.lotAvailabilityTextView.setText(R.string.parking_lot_full);
+                holder.lotBubbleImageView.setColorFilter(Color.argb(255, 139, 0, 0));
             } else if (lot.getAvailable() == 1) {
                 holder.lotAvailabilityTextView.setText(R.string.one_spot);
             } else {
