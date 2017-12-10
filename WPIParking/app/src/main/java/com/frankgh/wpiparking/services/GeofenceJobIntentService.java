@@ -138,15 +138,15 @@ public class GeofenceJobIntentService extends JobIntentService {
     private void handleTransition(int geofenceTransition, String fenceName) {
         switch (geofenceTransition) {
             case Geofence.GEOFENCE_TRANSITION_DWELL:
-                sendParkingNotification();
                 readParkingLotData();
+                sendParkingNotification();
                 break;
 
             case Geofence.GEOFENCE_TRANSITION_EXIT:
                 // Remove all internal geofences when we leave the container geofence
                 if (Constants.LATLNG_WPI.equals(fenceName)) {
-                    cancelParkingNotification();
                     removeInternalFences();
+                    cancelParkingNotification();
                 }
                 break;
         }
@@ -243,7 +243,7 @@ public class GeofenceJobIntentService extends JobIntentService {
 
         for (ParkingLot lot : parkingLotList) {
             int version = PreferenceManager.getDefaultSharedPreferences(this).getInt(
-                    Constants.GEOFENCES_ADDED_KEY + "." + lot.getName(), -1);
+                    Constants.FENCES_ADDED_KEY + "." + lot.getName(), -1);
             if (version == -1 || version < lot.getVersion()) {
                 // Create primitive fences for during driving
                 AwarenessFence duringDrivingFence = DetectedActivityFence.during(
@@ -315,7 +315,7 @@ public class GeofenceJobIntentService extends JobIntentService {
         FenceUpdateRequest.Builder builder = new FenceUpdateRequest.Builder();
         final List<String> lotNames = new ArrayList<>();
         for (String key : map.keySet()) {
-            if (key.indexOf(Constants.GEOFENCES_ADDED_KEY + ".") == 0) {
+            if (key.indexOf(Constants.FENCES_ADDED_KEY + ".") == 0) {
                 String lotName = key.substring(key.lastIndexOf('.') + 1);
                 builder.removeFence(lotName);
                 lotNames.add(lotName);
@@ -349,7 +349,7 @@ public class GeofenceJobIntentService extends JobIntentService {
             for (ParkingLot lot : parkingLotList) {
                 PreferenceManager.getDefaultSharedPreferences(this)
                         .edit()
-                        .putInt(Constants.GEOFENCES_ADDED_KEY + "." + lot.getName(), lot.getVersion())
+                        .putInt(Constants.FENCES_ADDED_KEY + "." + lot.getName(), lot.getVersion())
                         .apply();
             }
         }
@@ -367,7 +367,7 @@ public class GeofenceJobIntentService extends JobIntentService {
      */
     private void removeGeofencePreference(String name) {
         PreferenceManager.getDefaultSharedPreferences(this).edit()
-                .remove(Constants.GEOFENCES_ADDED_KEY + "." + name)
+                .remove(Constants.FENCES_ADDED_KEY + "." + name)
                 .apply();
     }
 
@@ -530,7 +530,9 @@ public class GeofenceJobIntentService extends JobIntentService {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        toast("All work complete");
+        if (BuildConfig.DEBUG) {
+            toast("All work complete");
+        }
     }
 
     // Helper for showing tests
