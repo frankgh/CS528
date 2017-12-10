@@ -305,7 +305,8 @@ public class MainActivity extends BaseActivity implements
                 startActivity(intent);
                 break;
             case R.id.nav_settings:
-
+//                Intent settingsIntent = new Intent(this, SettingsActivity.class);
+//                startActivity(settingsIntent);
                 break;
             case R.id.nav_send_feedback:
                 String surveyUrl = getString(R.string.survey_url);
