@@ -71,10 +71,6 @@
             android:name=".auth.AnonymousAuthActivity"
             android:label="@string/title_activity_anonymous_auth"
             android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".BluetoothDiscActivity"
-            android:label="@string/title_activity_bluetooth_disc"
-            android:theme="@style/AppTheme.NoActionBar" />
 
         <service
             android:name=".services.FenceJobIntentService"
@@ -84,7 +80,6 @@
             android:name=".services.GeofenceJobIntentService"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-
         <service
             android:name=".services.RegisterFencesJobIntentService"
             android:exported="true"
@@ -94,12 +89,10 @@
             android:name=".receivers.FenceBroadcastReceiver"
             android:enabled="true"
             android:exported="true" />
-
         <receiver
             android:name=".receivers.GeofenceBroadcastReceiver"
             android:enabled="true"
             android:exported="true" />
-
         <receiver
             android:name=".receivers.BootBroadcastReceiver"
             android:enabled="true"
@@ -108,6 +101,15 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.frankgh.wpiparking.MainActivity" />
+        </activity>
     </application>
 
 </manifest>
