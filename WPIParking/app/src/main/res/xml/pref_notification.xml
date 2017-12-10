@@ -1,4 +1,12 @@
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:key="pref_screen">
+
+    <com.frankgh.wpiparking.UnregisterDialogPreference
+        android:dialogMessage="@string/unregister_dialog_message"
+        android:dialogTitle="@string/unregister_question"
+        android:key="unregister"
+        android:positiveButtonText="@string/unregister"
+        android:title="@string/account" />
 
     <PreferenceCategory
         android:key="pref_key_notification"
@@ -15,8 +23,6 @@
         android:title="@string/pref_bluetooth">
         <ListPreference
             android:defaultValue="-1"
-            android:entries="@array/pref_example_list_titles"
-            android:entryValues="@array/pref_example_list_values"
             android:key="bluetooth_list"
             android:negativeButtonText="@null"
             android:positiveButtonText="@null"

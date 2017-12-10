@@ -21,10 +21,6 @@
                 android:icon="@drawable/ic_menu_feedback"
                 android:title="@string/send_feedback" />
             <item
-                android:id="@+id/nav_disconnect"
-                android:icon="@drawable/ic_menu_disconnect"
-                android:title="@string/disconnect" />
-            <item
                 android:id="@+id/nav_logout"
                 android:icon="@drawable/ic_menu_log_out"
                 android:title="@string/log_out" />
