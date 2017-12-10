@@ -11,6 +11,12 @@
         ".read": "$uid === auth.uid",
         ".write": "$uid === auth.uid"
       }
+    },
+	"notes": {
+      "$uid": {
+        ".read": "$uid === auth.uid",
+        ".write": "$uid === auth.uid"
+      }
     }
   }
 }
