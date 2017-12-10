@@ -139,7 +139,9 @@ public class GeofenceJobIntentService extends JobIntentService {
         switch (geofenceTransition) {
             case Geofence.GEOFENCE_TRANSITION_DWELL:
                 readParkingLotData();
-                sendParkingNotification();
+                if (allowParkingNotification()) {
+                    sendParkingNotification();
+                }
                 break;
 
             case Geofence.GEOFENCE_TRANSITION_EXIT:
@@ -150,6 +152,16 @@ public class GeofenceJobIntentService extends JobIntentService {
                 }
                 break;
         }
+    }
+
+    /**
+     * Determine whether parking notifications are allowed
+     *
+     * @return true if notifications are allowed, false otherwise
+     */
+    private boolean allowParkingNotification() {
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        return settings.getBoolean("notifications_parking", true);
     }
 
     /**
