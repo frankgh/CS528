@@ -418,7 +418,7 @@ public class GeofenceJobIntentService extends JobIntentService {
                         R.drawable.ic_notification_parking))
                 .setColor(Color.BLUE)
                 .setContentTitle(getString(R.string.suggest_wpi_parking))
-                .setContentText(getString(R.string.geofence_transition_notification_text))
+                .setContentText(getString(R.string.fence_notification_text))
                 .setContentIntent(notificationPendingIntent);
 
         // Dismiss notification once the user touches it.
@@ -485,7 +485,7 @@ public class GeofenceJobIntentService extends JobIntentService {
                         R.drawable.ic_launcher_background))
                 .setColor(Color.RED)
                 .setContentTitle(notificationDetails)
-                .setContentText(getString(R.string.geofence_transition_notification_text))
+                .setContentText(getString(R.string.fence_notification_text))
                 .setContentIntent(notificationPendingIntent);
 
         // Dismiss notification once the user touches it.
