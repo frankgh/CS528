@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import com.frankgh.wpiparking.Constants;
 import com.frankgh.wpiparking.services.FenceJobIntentService;
 
 /**
@@ -19,10 +18,7 @@ public class FenceBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (Constants.FENCE_RECEIVER_ACTION.equals(intent.getAction())) {
-            //boot has completed, now time to start our background service.
-            Log.d(TAG, "FENCE_RECEIVER_ACTION");
-            FenceJobIntentService.enqueueWork(context, intent);
-        }
+        Log.d(TAG, "onReceive");
+        FenceJobIntentService.enqueueWork(context, intent);
     }
 }
