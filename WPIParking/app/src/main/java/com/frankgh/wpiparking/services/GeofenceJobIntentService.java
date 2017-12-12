@@ -122,7 +122,7 @@ public class GeofenceJobIntentService extends JobIntentService {
 
         // Send notification and log the transition details.
         if (BuildConfig.DEBUG) {
-            sendNotification(geofenceTransitionDetails);
+//            sendNotification(geofenceTransitionDetails);
         }
         Log.i(TAG, geofenceTransitionDetails);
 
@@ -251,7 +251,7 @@ public class GeofenceJobIntentService extends JobIntentService {
         FenceUpdateRequest.Builder builder = new FenceUpdateRequest.Builder();
 
         // Get explicit pending intent to handle fence triggers
-        PendingIntent mPendingIntent = getFencePendingIntent();
+        PendingIntent pendingIntent = getFencePendingIntent();
 
         for (ParkingLot lot : parkingLotList) {
             int version = PreferenceManager.getDefaultSharedPreferences(this).getInt(
@@ -286,10 +286,10 @@ public class GeofenceJobIntentService extends JobIntentService {
                         startingDrivingFence, exitingLocationFence);
 
                 // Add fence with lot name as key
-                builder.addFence(lot.getName() + "-IN", drivingIntoParkingLot, mPendingIntent);
-                builder.addFence(lot.getName() + "-OUT", drivingOutOfParkingLot, mPendingIntent);
+                builder.addFence(lot.getName() + "-IN", drivingIntoParkingLot, pendingIntent);
+                builder.addFence(lot.getName() + "-OUT", drivingOutOfParkingLot, pendingIntent);
 
-                if (version < lot.getVersion()) {
+                if (version != -1 && version < lot.getVersion()) {
                     // Remove outdated fences from preferences
                     removeGeofencePreference(lot);
                 }
@@ -393,8 +393,8 @@ public class GeofenceJobIntentService extends JobIntentService {
     private PendingIntent getFencePendingIntent() {
         Log.d(TAG, "getFencePendingIntent invoked");
         Intent intent = new Intent(this, FenceBroadcastReceiver.class);
-        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling addFences().
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling addGeofences().
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     /**
@@ -431,7 +431,8 @@ public class GeofenceJobIntentService extends JobIntentService {
                 .setColor(Color.BLUE)
                 .setContentTitle(getString(R.string.suggest_wpi_parking))
                 .setContentText(getString(R.string.fence_notification_text))
-                .setContentIntent(notificationPendingIntent);
+                .setContentIntent(notificationPendingIntent)
+                .setVibrate(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
 
         // Dismiss notification once the user touches it.
         builder.setAutoCancel(true);
@@ -543,7 +544,7 @@ public class GeofenceJobIntentService extends JobIntentService {
     public void onDestroy() {
         super.onDestroy();
         if (BuildConfig.DEBUG) {
-            toast("All work complete");
+//            toast("All work complete");
         }
     }
 
