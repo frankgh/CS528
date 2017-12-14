@@ -18,7 +18,7 @@ public class FenceBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d(TAG, "onReceive");
+        Log.v(TAG, "onReceive");
         FenceJobIntentService.enqueueWork(context, intent);
     }
 }

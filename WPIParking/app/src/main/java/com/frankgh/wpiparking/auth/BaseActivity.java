@@ -52,8 +52,8 @@ public class BaseActivity extends AppCompatActivity {
 
     protected void startMainActivity() {
         Log.d(TAG, "startMainActivity");
-        startActivity(new Intent(this, MainActivity.class));
         finish();
+        startActivity(new Intent(this, MainActivity.class));
     }
 
     @Override

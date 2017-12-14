@@ -114,6 +114,8 @@ public class MakeNoteActivity extends BaseActivity {
             public void onSuccess(Uri uri) {
                 // Got the download URL for 'noteImages/uid/profile.png'
                 // Pass it to Picasso to download, show in ImageView and caching
+                imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+
                 Picasso
                         .with(getApplicationContext())
                         .load(uri.toString())
