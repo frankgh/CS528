@@ -50,7 +50,7 @@ public class FenceJobIntentService extends JobIntentService {
      */
     @Override
     public void onHandleWork(Intent intent) {
-        Log.d(TAG, "onHandleIntent invoked");
+        Log.v(TAG, "onHandleIntent invoked");
 
         mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() == null) {
@@ -65,9 +65,22 @@ public class FenceJobIntentService extends JobIntentService {
         FenceState fenceState = FenceState.extract(intent);
 
         if (fenceState.getCurrentState() != FenceState.TRUE) {
-            Log.e(TAG, fenceState.toString());
+            Log.d(TAG, fenceState.getFenceKey() + " IS NOT TRUE");
             return;
         }
+
+        if ("IN_VEHICLE".equals(fenceState.getFenceKey()) ||
+                "during(IN_VEHICLE)".equals(fenceState.getFenceKey()) ||
+                "starting(IN_VEHICLE)".equals(fenceState.getFenceKey()) ||
+                "stopping(IN_VEHICLE)".equals(fenceState.getFenceKey()) ||
+                fenceState.getFenceKey().endsWith("-ENTER") ||
+                fenceState.getFenceKey().endsWith("-EXIT") ||
+                fenceState.getFenceKey().endsWith("-IN-TEST")) {
+            Log.d(TAG, fenceState.getFenceKey());
+            return;
+        }
+
+        Log.d(TAG, "Detected " + fenceState.getFenceKey());
 
         // The lot name is part of the key to the fence
         String lotName = parseLotName(fenceState.getFenceKey());
@@ -116,6 +129,7 @@ public class FenceJobIntentService extends JobIntentService {
      * @param type      parking event type
      */
     private void writeNewParkingEvent(String userId, String lotName, long timestamp, int type) {
+        Log.d(TAG, "writeNewParkingEvent(" + lotName + ", " + ", " + timestamp + ", " + type + ")");
         String key = mDatabase.child("parking-events").push().getKey();
         ParkingEvent event = new ParkingEvent(lotName, timestamp, type);
         Map<String, Object> postValues = event.toMap();

@@ -328,9 +328,9 @@ public class MainActivity extends BaseActivity implements
         mMap = googleMap;
         zoomToLocation(Constants.WPI_AREA_LANDMARKS.get(Constants.LATLNG_WPI), 14f);
         if (BuildConfig.DEBUG) {
-            addMarkerMap(Constants.LATLNG_WPI, getString(R.string.app_name),
-                    Constants.GEOFENCE_RADIUS_IN_METERS,
-                    Constants.WPI_AREA_LANDMARKS.get(Constants.LATLNG_WPI));
+//            addMarkerMap(Constants.LATLNG_WPI, getString(R.string.app_name),
+//                    Constants.GEOFENCE_RADIUS_IN_METERS,
+//                    Constants.WPI_AREA_LANDMARKS.get(Constants.LATLNG_WPI));
         }
     }
 

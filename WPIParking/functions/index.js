@@ -35,9 +35,10 @@ exports.addMessage = functions.https.onRequest((req, res) => {
   const name = req.query.text;
   const timestamp = parseInt(req.query.timestamp, 10);
   const type = parseInt(req.query.type, 10);
+  const uid = req.query.uid;
   // [START adminSdkPush]
   // Push the new message into the Realtime Database using the Firebase Admin SDK.
-  admin.database().ref('/parking-events/dMBAAuRukvdK1uk0d0khEVEsgJ23').push({lotName: name, timestamp: timestamp, type: type}).then(snapshot => {
+  admin.database().ref('/parking-events/' + uid).push({lotName: name, timestamp: timestamp, type: type}).then(snapshot => {
     // Redirect with 303 SEE OTHER to the URL of the pushed object in the Firebase console.
     res.redirect(303, snapshot.ref);
   });

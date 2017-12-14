@@ -90,7 +90,7 @@ public class GeofenceJobIntentService extends JobIntentService {
      */
     @Override
     public void onHandleWork(Intent intent) {
-        Log.d(TAG, "onHandleWork invoked");
+        Log.v(TAG, "onHandleWork invoked");
 
         mAuth = FirebaseAuth.getInstance();
         if (mAuth.getCurrentUser() == null) {
@@ -122,7 +122,7 @@ public class GeofenceJobIntentService extends JobIntentService {
 
         // Send notification and log the transition details.
         if (BuildConfig.DEBUG) {
-            sendNotification(geofenceTransitionDetails);
+//            sendNotification(geofenceTransitionDetails);
         }
         Log.i(TAG, geofenceTransitionDetails);
 
@@ -251,31 +251,59 @@ public class GeofenceJobIntentService extends JobIntentService {
         FenceUpdateRequest.Builder builder = new FenceUpdateRequest.Builder();
 
         // Get explicit pending intent to handle fence triggers
-        PendingIntent mPendingIntent = getFencePendingIntent();
+        PendingIntent pendingIntent = getFencePendingIntent();
+
+        if (BuildConfig.DEBUG) {
+            builder.addFence("during(IN_VEHICLE)", DetectedActivityFence.during(
+                    DetectedActivityFence.IN_VEHICLE), pendingIntent);
+
+            builder.addFence("starting(IN_VEHICLE)", DetectedActivityFence.starting(
+                    DetectedActivityFence.IN_VEHICLE), pendingIntent);
+
+            builder.addFence("stopping(IN_VEHICLE)", DetectedActivityFence.stopping(
+                    DetectedActivityFence.IN_VEHICLE), pendingIntent);
+        }
 
         for (ParkingLot lot : parkingLotList) {
             int version = PreferenceManager.getDefaultSharedPreferences(this).getInt(
                     Constants.FENCES_ADDED_KEY + "." + lot.getName(), -1);
             if (version == -1 || version < lot.getVersion()) {
                 // Create primitive fences for during driving
-                AwarenessFence duringDrivingFence = DetectedActivityFence.during(
-                        DetectedActivityFence.IN_VEHICLE);
+                AwarenessFence duringDrivingFence = AwarenessFence.or(
+                        DetectedActivityFence.during(DetectedActivityFence.IN_VEHICLE),
+                        DetectedActivityFence.stopping(DetectedActivityFence.IN_VEHICLE));
 
                 // Create primitive fences for starting driving
-                AwarenessFence startingDrivingFence = DetectedActivityFence.starting(
-                        DetectedActivityFence.IN_VEHICLE);
+                AwarenessFence startingDrivingFence = AwarenessFence.or(
+                        DetectedActivityFence.starting(DetectedActivityFence.IN_VEHICLE),
+                        DetectedActivityFence.during(DetectedActivityFence.IN_VEHICLE));
 
                 // Create primitive fence for entering location fence
-                AwarenessFence enteringLocationFence = LocationFence.entering(
+                AwarenessFence inLocationFence = LocationFence.in(
                         lot.getLatitude(),
                         lot.getLongitude(),
-                        lot.getRadius());
+                        lot.getRadius(),
+                        Constants.GEOFENCE_LOITERING_DELAY);
+
+                // Create primitive fence for entering location fence
+                AwarenessFence enteringLocationFence = inLocationFence;
+                        /*AwarenessFence.or(
+                        inLocationFence, LocationFence.entering(
+                                lot.getLatitude(),
+                                lot.getLongitude(),
+                                lot.getRadius())) */
+                ;
 
                 // Create primitive fences for exiting location fence
                 AwarenessFence exitingLocationFence = LocationFence.exiting(
                         lot.getLatitude(),
                         lot.getLongitude(),
-                        lot.getRadius());
+                        lot.getRadius() + 20);
+                //AwarenessFence.or(
+//                        inLocationFence, LocationFence.exiting(
+//                                lot.getLatitude(),
+//                                lot.getLongitude(),
+//                                lot.getRadius() + 20));
 
                 // Create a combination fence to AND primitive fences.
                 AwarenessFence drivingIntoParkingLot = AwarenessFence.and(
@@ -286,10 +314,28 @@ public class GeofenceJobIntentService extends JobIntentService {
                         startingDrivingFence, exitingLocationFence);
 
                 // Add fence with lot name as key
-                builder.addFence(lot.getName() + "-IN", drivingIntoParkingLot, mPendingIntent);
-                builder.addFence(lot.getName() + "-OUT", drivingOutOfParkingLot, mPendingIntent);
+                builder.addFence(lot.getName() + "-IN", drivingIntoParkingLot, pendingIntent);
+                builder.addFence(lot.getName() + "-OUT", drivingOutOfParkingLot, pendingIntent);
 
-                if (version < lot.getVersion()) {
+                if (BuildConfig.DEBUG) {
+                    builder.addFence(lot.getName() + "-ENTER", LocationFence.entering(
+                            lot.getLatitude(),
+                            lot.getLongitude(),
+                            lot.getRadius()), pendingIntent);
+
+                    builder.addFence(lot.getName() + "-EXIT", LocationFence.exiting(
+                            lot.getLatitude(),
+                            lot.getLongitude(),
+                            lot.getRadius()), pendingIntent);
+
+                    builder.addFence(lot.getName() + "-IN-TEST", LocationFence.in(
+                            lot.getLatitude(),
+                            lot.getLongitude(),
+                            lot.getRadius(),
+                            Constants.GEOFENCE_LOITERING_DELAY), pendingIntent);
+                }
+
+                if (version != -1 && version < lot.getVersion()) {
                     // Remove outdated fences from preferences
                     removeGeofencePreference(lot);
                 }
@@ -307,7 +353,9 @@ public class GeofenceJobIntentService extends JobIntentService {
                     public void onComplete(@NonNull Task<Void> task) {
                         if (task.isSuccessful()) {
                             updateGeofencesAdded(parkingLotList);
-                            toast(getString(R.string.geofences_added));
+                            if (BuildConfig.DEBUG) {
+                                toast(getString(R.string.geofences_added));
+                            }
                         } else {
                             // Get the status code for the error and log it using a user-friendly message.
                             String errorMessage = GeofenceErrorMessages.getErrorString(getApplicationContext(), task.getException());
@@ -325,11 +373,23 @@ public class GeofenceJobIntentService extends JobIntentService {
 
         Map<String, ?> map = PreferenceManager.getDefaultSharedPreferences(this).getAll();
         FenceUpdateRequest.Builder builder = new FenceUpdateRequest.Builder();
+        if (BuildConfig.DEBUG) {
+            builder.removeFence("IN_VEHICLE");
+            builder.removeFence("during(IN_VEHICLE)");
+            builder.removeFence("starting(IN_VEHICLE)");
+            builder.removeFence("stopping(IN_VEHICLE)");
+        }
         final List<String> lotNames = new ArrayList<>();
         for (String key : map.keySet()) {
             if (key.indexOf(Constants.FENCES_ADDED_KEY + ".") == 0) {
                 String lotName = key.substring(key.lastIndexOf('.') + 1);
-                builder.removeFence(lotName);
+                builder.removeFence(lotName + "-IN");
+                builder.removeFence(lotName + "-OUT");
+                if (BuildConfig.DEBUG) {
+                    builder.removeFence(lotName + "-ENTER");
+                    builder.removeFence(lotName + "-EXIT");
+                    builder.removeFence(lotName + "-IN-TEST");
+                }
                 lotNames.add(lotName);
             }
         }
@@ -338,7 +398,9 @@ public class GeofenceJobIntentService extends JobIntentService {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
                 if (task.isSuccessful()) {
-                    toast(getString(R.string.geofences_removed));
+                    if (BuildConfig.DEBUG) {
+                        toast(getString(R.string.geofences_removed));
+                    }
                     for (String lot : lotNames) {
                         removeGeofencePreference(lot);
                     }
@@ -393,8 +455,8 @@ public class GeofenceJobIntentService extends JobIntentService {
     private PendingIntent getFencePendingIntent() {
         Log.d(TAG, "getFencePendingIntent invoked");
         Intent intent = new Intent(this, FenceBroadcastReceiver.class);
-        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling addFences().
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling addGeofences().
+        return PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     /**
@@ -431,7 +493,8 @@ public class GeofenceJobIntentService extends JobIntentService {
                 .setColor(Color.BLUE)
                 .setContentTitle(getString(R.string.suggest_wpi_parking))
                 .setContentText(getString(R.string.fence_notification_text))
-                .setContentIntent(notificationPendingIntent);
+                .setContentIntent(notificationPendingIntent)
+                .setVibrate(new long[]{100, 200, 300, 400, 500, 400, 300, 200, 400});
 
         // Dismiss notification once the user touches it.
         builder.setAutoCancel(true);
@@ -543,7 +606,7 @@ public class GeofenceJobIntentService extends JobIntentService {
     public void onDestroy() {
         super.onDestroy();
         if (BuildConfig.DEBUG) {
-            toast("All work complete");
+//            toast("All work complete");
         }
     }
 
