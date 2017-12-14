@@ -215,7 +215,7 @@ public class RegisterFencesJobIntentService extends JobIntentService implements 
         Log.d(TAG, "onDestroy: registerFences being destroyed!!!");
         super.onDestroy();
         if (BuildConfig.DEBUG) {
-            toast("All work complete");
+//            toast("All work complete");
         }
     }
 
